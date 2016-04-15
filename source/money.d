@@ -33,8 +33,7 @@ enum roundingMode {
 }
 
 /** Round an integer to a certain decimal place according to rounding mode */
-pure @nogc @trusted
-long round(long x, int dec_place, roundingMode m)
+long round(roundingMode m)(long x, int dec_place)
 out (result) {
     assert ((result % pow(10, dec_place)) == 0);
 }
@@ -111,36 +110,40 @@ body {
 
 ///
 unittest {
-    assert (round(1001, 1, roundingMode.DOWN) == 1000);
-    assert (round(1001, 1, roundingMode.UP)   == 1010);
-    assert (round(1005, 1, roundingMode.HALF_UP) == 1010);
-    assert (round(1005, 1, roundingMode.HALF_DOWN) == 1000);
+    assert (round!(roundingMode.DOWN)     (1001, 1) == 1000);
+    assert (round!(roundingMode.UP)       (1001, 1) == 1010);
+    assert (round!(roundingMode.HALF_UP)  (1005, 1) == 1010);
+    assert (round!(roundingMode.HALF_DOWN)(1005, 1) == 1000);
+}
+
+// nothrow TODO
+unittest {
+    assert (round!(roundingMode.HALF_UP)       ( 10, 1) ==  10);
+    assert (round!(roundingMode.CEILING)       ( 11, 1) ==  20);
+    assert (round!(roundingMode.FLOOR)         ( 19, 1) ==  10);
+    assert (round!(roundingMode.TRUNC)         ( 19, 1) ==  10);
+    assert (round!(roundingMode.HALF_UP)       ( 15, 1) ==  20);
+    assert (round!(roundingMode.HALF_UP)       (-15, 1) == -10);
+    assert (round!(roundingMode.HALF_DOWN)     ( 15, 1) ==  10);
+    assert (round!(roundingMode.HALF_DOWN)     ( 16, 1) ==  20);
+    assert (round!(roundingMode.HALF_EVEN)     ( 15, 1) ==  20);
+    assert (round!(roundingMode.HALF_EVEN)     ( 25, 1) ==  20);
+    assert (round!(roundingMode.HALF_ODD)      ( 15, 1) ==  10);
+    assert (round!(roundingMode.HALF_ODD)      ( 25, 1) ==  30);
+    assert (round!(roundingMode.HALF_TO_ZERO)  ( 25, 1) ==  20);
+    assert (round!(roundingMode.HALF_TO_ZERO)  ( 26, 1) ==  30);
+    assert (round!(roundingMode.HALF_TO_ZERO)  (-25, 1) == -20);
+    assert (round!(roundingMode.HALF_TO_ZERO)  (-26, 1) == -30);
+    assert (round!(roundingMode.HALF_FROM_ZERO)( 25, 1) ==  30);
+    assert (round!(roundingMode.HALF_FROM_ZERO)( 24, 1) ==  20);
+    assert (round!(roundingMode.HALF_FROM_ZERO)(-25, 1) == -30);
+    assert (round!(roundingMode.HALF_FROM_ZERO)(-24, 1) == -20);
 }
 
 unittest {
     import std.exception : assertThrown;
-    assert (round( 10, 1, roundingMode.HALF_UP)        ==  10);
-    assert (round( 11, 1, roundingMode.CEILING)        ==  20);
-    assert (round( 19, 1, roundingMode.FLOOR)          ==  10);
-    assert (round( 19, 1, roundingMode.TRUNC)          ==  10);
-    assert (round( 15, 1, roundingMode.HALF_UP)        ==  20);
-    assert (round(-15, 1, roundingMode.HALF_UP)        == -10);
-    assert (round( 15, 1, roundingMode.HALF_DOWN)      ==  10);
-    assert (round( 16, 1, roundingMode.HALF_DOWN)      ==  20);
-    assert (round( 15, 1, roundingMode.HALF_EVEN)      ==  20);
-    assert (round( 25, 1, roundingMode.HALF_EVEN)      ==  20);
-    assert (round( 15, 1, roundingMode.HALF_ODD)       ==  10);
-    assert (round( 25, 1, roundingMode.HALF_ODD)       ==  30);
-    assert (round( 25, 1, roundingMode.HALF_TO_ZERO)   ==  20);
-    assert (round( 26, 1, roundingMode.HALF_TO_ZERO)   ==  30);
-    assert (round(-25, 1, roundingMode.HALF_TO_ZERO)   == -20);
-    assert (round(-26, 1, roundingMode.HALF_TO_ZERO)   == -30);
-    assert (round( 25, 1, roundingMode.HALF_FROM_ZERO) ==  30);
-    assert (round( 24, 1, roundingMode.HALF_FROM_ZERO) ==  20);
-    assert (round(-25, 1, roundingMode.HALF_FROM_ZERO) == -30);
-    assert (round(-24, 1, roundingMode.HALF_FROM_ZERO) == -20);
-    assert (round( 10, 1, roundingMode.UNNECESSARY) == 10);
-    assertThrown!ForbiddenRounding(round( 12, 1, roundingMode.UNNECESSARY) == 10);
+    assert (round!(roundingMode.UNNECESSARY)   ( 10, 1) ==  10);
+    assertThrown!ForbiddenRounding(round!(roundingMode.UNNECESSARY)(12, 1) == 10);
 }
 
 /** Round a float to an integer according to rounding mode */
