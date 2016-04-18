@@ -1,5 +1,6 @@
 import std.math : pow, floor, ceil, lrint, abs;
 import std.conv : to;
+import core.checkedint : adds;
 
 /** Specifies rounding behavior
 
@@ -168,13 +169,29 @@ body {
 
 /** Holds an amount of money **/
 struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP) {
+    alias T = typeof(this);
     long amount;
 
-    this(long x) {
-        amount = x * pow(10, dec_places);
-    }
     this(double x) {
         amount = to!long(round(x * pow(10.0, dec_places), rmode));
+    }
+
+    T opBinary(string op)(T rhs)
+    {
+        static if (op == "+") {
+            auto ret = T(0);
+            ret.amount += amount;
+            ret.amount += rhs.amount;
+            // TODO check for overflow
+            return ret;
+        } else static if (op == "-") {
+            auto ret = T(0);
+            ret.amount += amount;
+            ret.amount -= rhs.amount;
+            // TODO check for overflow
+            return ret;
+        }
+        else static assert(0, "Operator "~op~" not implemented");
     }
 }
 
@@ -182,9 +199,11 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
 unittest {
     import std.stdio;
     alias EUR = money!("EUR");
-    alias USD = money!("USD");
     assert (EUR(100.0001) == EUR(100.00009));
+    alias USD = money!("USD");
     //assert (EUR(10) == USD(10)); // does not compile
+    assert (EUR(3.10) + EUR(1.40) == EUR(4.50));
+    assert (EUR(3.10) - EUR(1.40) == EUR(1.70));
 }
 
 class ForbiddenRounding : Exception {
