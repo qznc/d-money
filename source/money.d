@@ -1,6 +1,7 @@
 import std.math : pow, floor, ceil, lrint, abs;
 import std.conv : to;
 import core.checkedint : adds, subs;
+import std.format : FormatSpec, formattedWrite;
 
 /** Specifies rounding behavior
 
@@ -185,6 +186,7 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
     static immutable init = fromLong(0L);
     static immutable max = fromLong(long.max);
     static immutable min = fromLong(long.min);
+    private static immutable dec_mask = to!long(pow(10.0, dec_places));
 
     T opBinary(string op)(const T rhs) const
     {
@@ -203,9 +205,31 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
         }
         else static assert(0, "Operator "~op~" not implemented");
     }
+
+    void toString(scope void delegate(const(char)[]) sink,
+            FormatSpec!char fmt) const
+    {
+        switch(fmt.spec)
+        {
+            case 'f':
+                formattedWrite(sink, "%d", (amount / dec_mask));
+                sink(".");
+                formattedWrite(sink, "%d", (amount % dec_mask));
+                sink(curr);
+                break;
+            case 'd':
+                auto ra = round!rmode(amount, dec_places);
+                formattedWrite(sink, "%d", (ra / dec_mask));
+                sink(curr);
+                break;
+            default:
+                throw new Exception("Unknown format specifier: %" ~
+                        fmt.spec);
+        }
+    }
 }
 
-/// ditto
+/// Basic usage
 unittest {
     import std.stdio;
     alias EUR = money!("EUR");
@@ -214,9 +238,16 @@ unittest {
     //assert (EUR(10) == USD(10)); // does not compile
     assert (EUR(3.10) + EUR(1.40) == EUR(4.50));
     assert (EUR(3.10) - EUR(1.40) == EUR(1.70));
+
+    import std.format : format;
+    // for writefln("%d", EUR(3.6));
+    assert(format("%d", EUR(3.6)) == "4EUR");
+    assert(format("%d", EUR(3.1)) == "3EUR");
+    // for writefln("%f", EUR(3.141592));
+    assert(format("%f", EUR(3.141592)) == "3.1416EUR");
 }
 
-/// ditto
+/// Overflow is an error, since silent corruption is worse
 unittest {
     import std.exception : assertThrown;
     alias EUR = money!("EUR");
