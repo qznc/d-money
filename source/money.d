@@ -44,36 +44,34 @@ body {
         return x;
 
     const half  = zeros / 2;
-    final switch (m) with (roundingMode) {
-        case CEILING: goto case;
-        case UP:
+    with (roundingMode) {
+        static if (m == CEILING || m == UP) {
             return ((x / zeros) + 1) * zeros;
-        case FLOOR: goto case;
-        case TRUNC: goto case;
-        case DOWN: return x / zeros * zeros;
-        case HALF_UP:
+        } else static if (m == FLOOR || m == TRUNC || m == DOWN) {
+            return x / zeros * zeros;
+        } else static if (m == HALF_UP) {
             if ((x % zeros) >= half)
                 return ((x / zeros) + 1) * zeros;
             else
                 return x / zeros * zeros;
-        case HALF_DOWN:
+        } else static if (m == HALF_DOWN) {
             if ((x % zeros) > half)
                 return ((x / zeros) + 1) * zeros;
             else
                 return x / zeros * zeros;
-        case HALF_EVEN:
+        } else static if (m == HALF_EVEN) {
             const down = x / zeros;
             if (down % 2 == 0)
                 return down * zeros;
             else
                 return (down+1) * zeros;
-        case HALF_ODD:
+        } else static if (m == HALF_ODD) {
             const down = x / zeros;
             if (down % 2 == 0)
                 return (down+1) * zeros;
             else
                 return down * zeros;
-        case HALF_TO_ZERO:
+        } else static if (m == HALF_TO_ZERO) {
             const down = x / zeros;
             if (down < 0) {
                 if (abs(x % zeros) <= half) {
@@ -88,7 +86,7 @@ body {
                     return (down) * zeros;
                 }
             }
-        case HALF_FROM_ZERO:
+        } else static if (m == HALF_FROM_ZERO) {
             const down = x / zeros;
             if (down < 0) {
                 if (abs(x % zeros) < half) {
@@ -103,8 +101,9 @@ body {
                     return (down) * zeros;
                 }
             }
-        case UNNECESSARY:
+        } else static if (m == UNNECESSARY) {
             throw forbiddenRounding;
+        }
     }
 }
 
@@ -116,7 +115,7 @@ unittest {
     assert (round!(roundingMode.HALF_DOWN)(1005, 1) == 1000);
 }
 
-// nothrow TODO
+@safe pure @nogc nothrow
 unittest {
     assert (round!(roundingMode.HALF_UP)       ( 10, 1) ==  10);
     assert (round!(roundingMode.CEILING)       ( 11, 1) ==  20);
