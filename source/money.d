@@ -1,6 +1,6 @@
 import std.math : pow, floor, ceil, lrint, abs;
 import std.conv : to;
-import core.checkedint : adds;
+import core.checkedint : adds, subs;
 
 /** Specifies rounding behavior
 
@@ -103,7 +103,7 @@ body {
                 }
             }
         } else static if (m == UNNECESSARY) {
-            throw forbiddenRounding;
+            throw new ForbiddenRounding();
         }
     }
 }
@@ -163,7 +163,7 @@ body {
         case HALF_TO_ZERO: return x; // FIXME
         case HALF_FROM_ZERO: return x; // FIXME
         case UNNECESSARY:
-            throw forbiddenRounding;
+            throw new ForbiddenRounding();
     }
 }
 
@@ -176,26 +176,36 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
         amount = to!long(round(x * pow(10.0, dec_places), rmode));
     }
 
-    T opBinary(string op)(T rhs)
+    private static T fromLong(long a) {
+        T ret = void;
+        ret.amount = a;
+        return ret;
+    }
+
+    static immutable init = fromLong(0L);
+    static immutable max = fromLong(long.max);
+    static immutable min = fromLong(long.min);
+
+    T opBinary(string op)(const T rhs) const
     {
         static if (op == "+") {
-            auto ret = T(0);
-            ret.amount += amount;
-            ret.amount += rhs.amount;
-            // TODO check for overflow
+            bool overflow;
+            auto ret = fromLong(adds(amount, rhs.amount, overflow));
+            if (overflow)
+                throw new OverflowException();
             return ret;
         } else static if (op == "-") {
-            auto ret = T(0);
-            ret.amount += amount;
-            ret.amount -= rhs.amount;
-            // TODO check for overflow
+            bool overflow;
+            auto ret = fromLong(subs(amount, rhs.amount, overflow));
+            if (overflow)
+                throw new OverflowException();
             return ret;
         }
         else static assert(0, "Operator "~op~" not implemented");
     }
 }
 
-///
+/// ditto
 unittest {
     import std.stdio;
     alias EUR = money!("EUR");
@@ -204,6 +214,16 @@ unittest {
     //assert (EUR(10) == USD(10)); // does not compile
     assert (EUR(3.10) + EUR(1.40) == EUR(4.50));
     assert (EUR(3.10) - EUR(1.40) == EUR(1.70));
+}
+
+/// ditto
+unittest {
+    import std.exception : assertThrown;
+    alias EUR = money!("EUR");
+    auto m = EUR.max;
+    auto one = EUR(1);
+    assertThrown!OverflowException(m + one);
+    assertThrown!OverflowException(EUR.min - one);
 }
 
 class ForbiddenRounding : Exception {
@@ -218,5 +238,17 @@ class ForbiddenRounding : Exception {
         }
     }
 }
-private immutable static forbiddenRounding = new ForbiddenRounding();
+
+class OverflowException : Exception {
+    public
+    {
+        @safe pure nothrow this(
+                string file =__FILE__,
+                size_t line = __LINE__,
+                Throwable next = null)
+        {
+            super("Overflow", file, line, next);
+        }
+    }
+}
 
