@@ -58,6 +58,8 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
     {
         switch(fmt.spec)
         {
+            case 's': /* default e.g. for writeln */
+                goto case;
             case 'f':
                 formattedWrite(sink, "%d", (amount / dec_mask));
                 sink(".");
