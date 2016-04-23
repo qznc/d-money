@@ -26,11 +26,11 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
         return ret;
     }
 
-    /// default initialisation value
+    /// default initialisation value is zero
     static immutable init = fromLong(0L);
-    /// maximum amount
+    /// maximum amount depends on dec_places
     static immutable max = fromLong(long.max);
-    /// minimum amount
+    /// minimum amount depends on dec_places
     static immutable min = fromLong(long.min);
 
     private static immutable dec_mask = to!long(pow(10.0, dec_places));
@@ -100,9 +100,8 @@ unittest {
 unittest {
     import std.exception : assertThrown;
     alias EUR = money!("EUR");
-    auto m = EUR.max;
     auto one = EUR(1);
-    assertThrown!OverflowException(m + one);
+    assertThrown!OverflowException(EUR.max + one);
     assertThrown!OverflowException(EUR.min - one);
 }
 
