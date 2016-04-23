@@ -63,10 +63,13 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
             case 'f':
                 formattedWrite(sink, "%d", (amount / dec_mask));
                 sink(".");
-                auto divider = 1;
-                if (fmt.precision < dec_places)
-                    divider = pow(10, dec_places - fmt.precision);
-                formattedWrite(sink, "%d", (amount % dec_mask) / divider);
+                auto decimals = amount % dec_mask;
+                if (fmt.precision < dec_places) {
+                    auto n = dec_places - fmt.precision;
+                    decimals = round!(rmode,n)(decimals);
+                    decimals = decimals / pow(10, dec_places - fmt.precision);
+                }
+                formattedWrite(sink, "%d", decimals);
                 sink(curr);
                 break;
             case 'd':
@@ -97,7 +100,7 @@ unittest {
     assert(format("%d", EUR(3.1)) == "3EUR");
     // for writefln("%f", EUR(3.141592));
     assert(format("%f", EUR(3.141592)) == "3.1416EUR");
-    assert(format("%.2f", EUR(3.141592)) == "3.14EUR");
+    assert(format("%.2f", EUR(3.145)) == "3.15EUR");
 }
 
 /// Overflow is an error, since silent corruption is worse
