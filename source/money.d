@@ -6,10 +6,16 @@
  */
 module money;
 
-import std.math : pow, floor, ceil, lrint, abs;
+import std.math : floor, ceil, lrint, abs;
 import std.conv : to;
 import core.checkedint : adds, subs;
 import std.format : FormatSpec, formattedWrite;
+
+@nogc pure @safe nothrow
+private long pow10(int x) {
+    if (x <= 0) return 1;
+    return 10 * pow10(x-1);
+}
 
 /** Holds an amount of money **/
 struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP) {
@@ -17,7 +23,7 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
     long amount;
 
     this(double x) {
-        amount = to!long(round(x * pow(10.0, dec_places), rmode));
+        amount = to!long(round(x * pow10(dec_places), rmode));
     }
 
     private static T fromLong(long a) {
@@ -33,7 +39,7 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
     /// minimum amount depends on dec_places
     static immutable min = fromLong(long.min);
 
-    private static immutable dec_mask = to!long(pow(10.0, dec_places));
+    private static immutable dec_mask = pow10(dec_places);
 
     T opBinary(string op)(const T rhs) const
     {
@@ -66,8 +72,8 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
                 auto decimals = amount % dec_mask;
                 if (fmt.precision < dec_places) {
                     auto n = dec_places - fmt.precision;
-                    decimals = round!(rmode,n)(decimals);
-                    decimals = decimals / pow(10, dec_places - fmt.precision);
+                    decimals = round!(rmode)(decimals,n);
+                    decimals = decimals / pow10(n);
                 }
                 formattedWrite(sink, "%d", decimals);
                 sink(curr);
@@ -138,10 +144,10 @@ enum roundingMode {
 /** Round an integer to a certain decimal place according to rounding mode */
 long round(roundingMode m)(long x, int dec_place)
 out (result) {
-    assert ((result % pow(10, dec_place)) == 0);
+    assert ((result % pow10(dec_place)) == 0);
 }
 body {
-    const zeros = pow(10, dec_place);
+    const zeros = pow10(dec_place);
     /* short cut, also removes edge cases */
     if ((x % zeros) == 0)
         return x;
