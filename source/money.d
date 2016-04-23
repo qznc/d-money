@@ -56,6 +56,7 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
                 throw new OverflowException();
             return ret;
         }
+        // TODO support * / % ? Might be useful for taxes etc.
         else static assert(0, "Operator "~op~" not implemented");
     }
 
