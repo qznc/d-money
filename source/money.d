@@ -271,6 +271,8 @@ body {
     }
 }
 
+/** Exception is thrown if rounding would have to happen,
+    but roundingMode.UNNECESSARY is specified. */
 class ForbiddenRounding : Exception {
     public
     {
@@ -284,6 +286,7 @@ class ForbiddenRounding : Exception {
     }
 }
 
+/** Overflow would happen with money arithmetic. */
 class OverflowException : Exception {
     public
     {
