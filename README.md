@@ -12,6 +12,13 @@ Features:
 * efficient (faster than BigNum)
 * overflow checking for arithmetic
 
+Scope is smaller than JSR 354, for example,
+which also considers conversion and meta data.
+A conversion rate depends on target date and time,
+the currencies involved, the provider, the amount, and other factors.
+If you need meta data,
+then wrap `money` into your own data type.
+
 Internally, this uses a `long` data type.
 This limits the numbers depending on the number of decimals specified.
 A plain `money!"EUR"` type has a max of
