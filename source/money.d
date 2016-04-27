@@ -119,6 +119,37 @@ unittest {
     assertThrown!OverflowException(EUR.min - one);
 }
 
+unittest {
+    alias EUR = money!("EUR");
+    assert(EUR(5) < EUR(6));
+    assert(EUR(6) > EUR(5));
+    assert(EUR(5) == EUR(5));
+    assert(EUR(6) != EUR(5));
+}
+
+unittest {
+    alias EUR = money!("EUR");
+    auto x = EUR(42);
+    assert(EUR(84) == x * 2);
+    //x = x * x; // does not compile
+    assert(EUR(21) == x / 2);
+    assert(EUR(1) == x % 4);
+}
+
+unittest {
+    import std.exception : assertThrown;
+    alias EURa = money!("EUR", 2);
+    alias EURb = money!("EUR", 4);
+    auto x = EURa(1.01);
+    auto y = EURb(1.0001);
+    assert(x > y);
+    assert(x+y > y);
+    assert(x+y > x);
+    x = y;
+    assert(x == EURa(1));
+    x = EURa.max;
+    assertThrown!OverflowException(y = x);
+}
 
 /** Specifies rounding behavior **/
 enum roundingMode {
