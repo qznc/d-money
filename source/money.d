@@ -8,7 +8,7 @@ module money;
 
 import std.math : floor, ceil, lrint, abs;
 import std.conv : to;
-import core.checkedint : adds, subs;
+import core.checkedint : adds, subs, muls, negs;
 import std.format : FormatSpec, formattedWrite;
 
 @nogc pure @safe nothrow
@@ -58,6 +58,36 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
         }
         // TODO support * / % ? Might be useful for taxes etc.
         else static assert(0, "Operator "~op~" not implemented");
+    }
+
+    T opBinary(string op)(const long rhs) const
+    {
+        static if (op == "*") {
+            bool overflow;
+            auto ret = fromLong(muls(amount, rhs, overflow));
+            if (overflow)
+                throw new OverflowException();
+            return ret;
+        } else static if (op == "/") {
+            return fromLong(amount / rhs);
+        } else static if (op == "%") {
+            const intpart = amount / pow10(dec_places);
+            return fromLong(intpart % rhs * pow10(dec_places));
+        }
+        // TODO support * / % ? Might be useful for taxes etc.
+        else static assert(0, "Operator "~op~" not implemented");
+    }
+
+    bool opEquals()(auto ref const T other) const
+    {
+        return other.amount == amount;
+    }
+
+    int opCmp(const T other) const
+    {
+        if (other.amount > this.amount) return -1;
+        if (other.amount < this.amount) return 1;
+        return 0;
     }
 
     void toString(scope void delegate(const(char)[]) sink,
@@ -133,7 +163,7 @@ unittest {
     assert(EUR(84) == x * 2);
     //x = x * x; // does not compile
     assert(EUR(21) == x / 2);
-    assert(EUR(1) == x % 4);
+    assert(EUR(2) == x % 4);
 }
 
 unittest {
