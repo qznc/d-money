@@ -10,6 +10,7 @@ import std.math : floor, ceil, lrint, abs;
 import std.conv : to;
 import core.checkedint : adds, subs, muls, negs;
 import std.format : FormatSpec, formattedWrite;
+import std.traits : hasMember;
 
 @nogc pure @safe nothrow
 private long pow10(int x) {
@@ -20,6 +21,8 @@ private long pow10(int x) {
 /** Holds an amount of money **/
 struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP) {
     alias T = typeof(this);
+    enum __dec_places = dec_places;
+    enum __rmode = rmode;
     long amount;
 
     this(double x) {
@@ -83,11 +86,22 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
         return other.amount == amount;
     }
 
-    int opCmp(const T other) const
+    int opCmp(OT)(const OT other) const
+        if (isMoney!OT)
     {
-        if (other.amount > this.amount) return -1;
-        if (other.amount < this.amount) return 1;
-        return 0;
+        static if (dec_places == other.__dec_places) {
+            if (other.amount > this.amount) return -1;
+            if (other.amount < this.amount) return 1;
+            return 0;
+        } else static if (dec_places < other.__dec_places) {
+            /* D implicitly makes this work for case '>' */
+            auto nthis = this * pow10(other.__dec_places - dec_places);
+            /* overflow check included */
+            if (other.amount > nthis.amount) return -1;
+            if (other.amount < nthis.amount) return 1;
+            return 0;
+        }
+        else static assert(0, "opCmp with such 'other' not implemented");
     }
 
     void toString(scope void delegate(const(char)[]) sink,
@@ -120,6 +134,12 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
         }
     }
 }
+
+enum isMoney(T) =
+    (hasMember!(T, "amount") &&
+     hasMember!(T, "__dec_places") &&
+     hasMember!(T, "__rmode"));
+static assert (isMoney!(money!"EUR"));
 
 /// Basic usage
 unittest {
@@ -171,14 +191,8 @@ unittest {
     alias EURa = money!("EUR", 2);
     alias EURb = money!("EUR", 4);
     auto x = EURa(1.01);
-    auto y = EURb(1.0001);
-    assert(x > y);
-    assert(x+y > y);
-    assert(x+y > x);
-    x = y;
-    assert(x == EURa(1));
-    x = EURa.max;
-    assertThrown!OverflowException(y = x);
+    assert(x > EURb(1.0001));
+    assert(x < EURb(1.0101));
 }
 
 /** Specifies rounding behavior **/
