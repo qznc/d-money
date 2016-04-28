@@ -20,7 +20,7 @@
  */
 module money;
 
-import std.math : floor, ceil, lrint, abs;
+import std.math : floor, ceil, lrint, abs, FloatingPointControl;
 import std.conv : to;
 import core.checkedint : adds, subs, muls, negs;
 import std.format : FormatSpec, formattedWrite;
@@ -211,8 +211,6 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
 /// Basic usage
 unittest
 {
-    import std.stdio;
-
     alias EUR = money!("EUR");
     assert(EUR(100.0001) == EUR(100.00009));
     assert(EUR(3.10) + EUR(1.40) == EUR(4.50));
@@ -269,13 +267,27 @@ enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
         && hasMember!(T, "__rmode"));
 static assert(isMoney!(money!"EUR"));
 
+unittest {
+    alias EUR = money!("EUR");
+    import std.format : format;
+    assert(format("%s", EUR(3.1)) == "3.1000EUR");
+
+    import std.exception : assertThrown;
+    assertThrown!Exception(format("%x", EUR(3.1)));
+}
+
 unittest
 {
     alias EUR = money!("EUR");
     assert(EUR(5) < EUR(6));
     assert(EUR(6) > EUR(5));
+    assert(EUR(5) >= EUR(5));
     assert(EUR(5) == EUR(5));
     assert(EUR(6) != EUR(5));
+
+    import std.exception : assertThrown;
+    assertThrown!OverflowException(EUR.max * 2);
+    assertThrown!OverflowException(EUR.max * 2.0);
 }
 
 unittest
@@ -295,6 +307,7 @@ unittest
     auto x = EURa(1.01);
     assert(x > EURb(1.0001));
     assert(x < EURb(1.0101));
+    assert(x <= EURb(1.01));
 }
 
 /** Specifies rounding behavior **/
@@ -483,6 +496,7 @@ unittest
 //pure nothrow @nogc @trusted
 real round(real x, roundingMode m) body
 {
+    FloatingPointControl fpctrl;
     final switch (m) with (roundingMode)
     {
     case UP:
@@ -492,18 +506,28 @@ real round(real x, roundingMode m) body
     case HALF_UP:
         return lrint(x);
     case HALF_DOWN:
+        fpctrl.rounding = FloatingPointControl.roundDown;
+        return lrint(x);
+    case HALF_TO_ZERO:
+        fpctrl.rounding = FloatingPointControl.roundToZero;
         return lrint(x);
     case HALF_EVEN:
-        return lrint(x);
     case HALF_ODD:
-        return x; // FIXME
-    case HALF_TO_ZERO:
-        return x; // FIXME
     case HALF_FROM_ZERO:
-        return x; // FIXME
     case UNNECESSARY:
         throw new ForbiddenRounding();
     }
+}
+
+unittest {
+    assert(round(3.5, roundingMode.HALF_DOWN) == 3.0);
+    assert(round(3.8, roundingMode.HALF_TO_ZERO) == 3.0);
+
+    import std.exception : assertThrown;
+    assertThrown!ForbiddenRounding(round(3.1, roundingMode.UNNECESSARY));
+    assertThrown!ForbiddenRounding(round(3.1, roundingMode.HALF_EVEN));
+    assertThrown!ForbiddenRounding(round(3.1, roundingMode.HALF_ODD));
+    assertThrown!ForbiddenRounding(round(3.1, roundingMode.HALF_FROM_ZERO));
 }
 
 /** Exception is thrown if rounding would have to happen,
