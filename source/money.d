@@ -1,5 +1,19 @@
 /******
- * Handling money amounts safely and efficiently.
+ * Handling amounts of money safely and efficiently.
+ *
+ * Amounts of money means that this is about numbers and they are tagged
+ * with a currency id like "EUR" or "USD".
+ * This modules wants to be a good 80% solution.
+ * Not applicable for any situation, but most of them
+ * and provide something better than anything easy.
+ *
+ * Handling money safely means to avoid programming errors, which
+ * lead to money vanishing to the unknown (e.g. rounding errors).
+ * Deterministic arithmetic is necessary.
+ *
+ * Handling money efficiently means to provide good performance.
+ * Mostly in contrast to using something with arbitrary precision,
+ * like std.bigint or GNU BigNum.
  *
  * License: $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Authors: Andreas Zwinkau
