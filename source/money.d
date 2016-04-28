@@ -34,9 +34,10 @@ import std.traits : hasMember;
 }
 
 /** Holds an amount of money **/
-struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP)
+struct money(string currency, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP)
 {
     alias T = typeof(this);
+    enum __currency = currency;
     enum __dec_places = dec_places;
     enum __rmode = rmode;
     long amount;
@@ -109,7 +110,8 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
 
-    bool opEquals()(auto ref const T other) const
+    bool opEquals(OT)(auto ref const OT other) const
+        if (isMoney!OT && other.__currency == currency && other.__dec_places == dec_places)
     {
         return other.amount == amount;
     }
@@ -156,12 +158,12 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
                 decimals = decimals / pow10(n);
             }
             formattedWrite(sink, "%d", decimals);
-            sink(curr);
+            sink(currency);
             break;
         case 'd':
             auto ra = round!rmode(amount, dec_places);
             formattedWrite(sink, "%d", (ra / dec_mask));
-            sink(curr);
+            sink(currency);
             break;
         default:
             throw new Exception("Unknown format specifier: %" ~ fmt.spec);
@@ -176,8 +178,6 @@ unittest
 
     alias EUR = money!("EUR");
     assert(EUR(100.0001) == EUR(100.00009));
-    alias USD = money!("USD");
-    //assert (EUR(10) == USD(10)); // does not compile
     assert(EUR(3.10) + EUR(1.40) == EUR(4.50));
     assert(EUR(3.10) - EUR(1.40) == EUR(1.70));
 
@@ -202,23 +202,27 @@ unittest
     assertThrown!OverflowException(EUR.min - one);
 }
 
-/// Dubious rounding
+/// Arithmetic ignores rounding mode
 unittest
 {
     alias EUR = money!("EUR", 2, roundingMode.UP);
     auto one = EUR(1);
-    assert(one == one / 3);
+    assert(one != one / 3);
 }
 
-/// Dubious equality
+/// Generic equality
 unittest
 {
+    alias USD = money!("USD", 2);
     alias EURa = money!("EUR", 2);
     alias EURb = money!("EUR", 4);
     alias EURc = money!("EUR", 4, roundingMode.DOWN);
-    assert(EURa(1.01) == EURb(1.001));
-    assert(EURa(1.01) != EURb(1.019));
-    assert(EURa(1.01) == EURc(1.019));
+    // cannot compile with different currencies
+    static assert(!__traits(compiles, EURa(1) == USD(1)));
+    // cannot compile with different dec_places
+    static assert(!__traits(compiles, EURa(1) == EURb(1)));
+    // can check equality if only rounding mode differs
+    assert(EURb(1.01) == EURc(1.01));
 }
 
 enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
@@ -239,7 +243,7 @@ unittest
     alias EUR = money!("EUR");
     auto x = EUR(42);
     assert(EUR(84) == x * 2);
-    //x = x * x; // does not compile
+    static assert(!__traits(compiles, x * x));
     assert(EUR(21) == x / 2);
     assert(EUR(2) == x % 4);
 }
