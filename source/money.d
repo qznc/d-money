@@ -155,10 +155,6 @@ struct money(string curr, int dec_places = 4, roundingMode rmode = roundingMode.
     }
 }
 
-enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
-        && hasMember!(T, "__rmode"));
-static assert(isMoney!(money!"EUR"));
-
 /// Basic usage
 unittest
 {
@@ -191,6 +187,10 @@ unittest
     assertThrown!OverflowException(EUR.max + one);
     assertThrown!OverflowException(EUR.min - one);
 }
+
+enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
+        && hasMember!(T, "__rmode"));
+static assert(isMoney!(money!"EUR"));
 
 unittest
 {
