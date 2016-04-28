@@ -188,6 +188,25 @@ unittest
     assertThrown!OverflowException(EUR.min - one);
 }
 
+/// Dubious rounding
+unittest
+{
+    alias EUR = money!("EUR", 2, roundingMode.UP);
+    auto one = EUR(1);
+    assert(one == one / 3);
+}
+
+/// Dubious equality
+unittest
+{
+    alias EURa = money!("EUR", 2);
+    alias EURb = money!("EUR", 4);
+    alias EURc = money!("EUR", 4, roundingMode.DOWN);
+    assert(EURa(1.01) == EURb(1.001));
+    assert(EURa(1.01) != EURb(1.019));
+    assert(EURa(1.01) == EURc(1.019));
+}
+
 enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
         && hasMember!(T, "__rmode"));
 static assert(isMoney!(money!"EUR"));
@@ -213,8 +232,6 @@ unittest
 
 unittest
 {
-    import std.exception : assertThrown;
-
     alias EURa = money!("EUR", 2);
     alias EURb = money!("EUR", 4);
     auto x = EURa(1.01);
