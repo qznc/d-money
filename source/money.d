@@ -110,6 +110,36 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
 
+    T opBinary(string op)(const real rhs) const
+    {
+        static if (op == "*")
+        {
+            const converted = T(rhs);
+            bool overflow = false;
+            const result = muls(amount, converted.amount, overflow);
+            if (overflow)
+                throw new OverflowException();
+            return fromLong(result / pow10(dec_places));
+        }
+        else static if (op == "/")
+        {
+            const converted = T(rhs);
+            bool overflow = false;
+            auto mult = muls(amount, pow10(dec_places), overflow);
+            if (overflow)
+                throw new OverflowException();
+            return fromLong(mult / converted.amount);
+        }
+        else static if (op == "%")
+        {
+            const converted = T(rhs);
+            return fromLong(amount % converted.amount);
+        }
+        // TODO support * / % ? Might be useful for taxes etc.
+        else
+            static assert(0, "Operator " ~ op ~ " not implemented");
+    }
+
     bool opEquals(OT)(auto ref const OT other) const
         if (isMoney!OT && other.__currency == currency && other.__dec_places == dec_places)
     {
@@ -180,6 +210,7 @@ unittest
     assert(EUR(100.0001) == EUR(100.00009));
     assert(EUR(3.10) + EUR(1.40) == EUR(4.50));
     assert(EUR(3.10) - EUR(1.40) == EUR(1.70));
+    assert(EUR(10.01) * 1.1 == EUR(11.011));
 
     import std.format : format;
 
