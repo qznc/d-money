@@ -42,6 +42,7 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
     enum __rmode = rmode;
     long amount;
 
+    /// Usual contructor. Uses rmode on x.
     this(double x)
     {
         amount = to!long(round(x * pow10(dec_places), rmode));
@@ -63,6 +64,7 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
 
     private static immutable dec_mask = pow10(dec_places);
 
+    /// Can add and subtract money amounts of the same type.
     T opBinary(string op)(const T rhs) const
     {
         static if (op == "+")
@@ -86,6 +88,7 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
 
+    /// Can multiply, divide, and modulo with integer values.
     T opBinary(string op)(const long rhs) const
     {
         static if (op == "*")
@@ -110,6 +113,7 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
 
+    /// Can multiply, divide, and modulo floating point numbers.
     T opBinary(string op)(const real rhs) const
     {
         static if (op == "*")
@@ -140,13 +144,15 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
 
-    bool opEquals(OT)(auto ref const OT other) const
-        if (isMoney!OT && other.__currency == currency && other.__dec_places == dec_places)
+    /// Can check equality with money amounts of the same concurrency and decimal places.
+    bool opEquals(OT)(auto ref const OT other) const if (isMoney!OT
+            && other.__currency == currency && other.__dec_places == dec_places)
     {
         return other.amount == amount;
     }
 
-    int opCmp(OT)(const OT other) const if (isMoney!OT)
+    /// Can compare with money amounts of the same concurrency.
+    int opCmp(OT)(const OT other) const if (isMoney!OT && other.__currency == currency)
     {
         static if (dec_places == other.__dec_places)
         {
@@ -171,6 +177,7 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
             static assert(0, "opCmp with such 'other' not implemented");
     }
 
+    /// Can convert to string.
     void toString(scope void delegate(const(char)[]) sink, FormatSpec!char fmt) const
     {
         switch (fmt.spec)
@@ -241,7 +248,7 @@ unittest
     assert(one != one / 3);
 }
 
-/// Generic equality
+/// Generic equality and order
 unittest
 {
     alias USD = money!("USD", 2);
@@ -254,6 +261,8 @@ unittest
     static assert(!__traits(compiles, EURa(1) == EURb(1)));
     // can check equality if only rounding mode differs
     assert(EURb(1.01) == EURc(1.01));
+    // cannot compare with different currencies
+    static assert(!__traits(compiles, EURa(1) < USD(1)));
 }
 
 enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
