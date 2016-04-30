@@ -1,0 +1,35 @@
+DDOC = <!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta name=viewport content="width=device-width, initial-scale=1">
+        <link type="text/css" href="theme.css" rel="stylesheet" media="all" />
+        <title>$(TITLE) ddoc</title>
+        <style>
+body { max-width: 30em; margin: 1em auto; padding: 1em; }
+h2,
+pre { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono", Consolas, Monaco, "Liberation Mono", Andale Mono, monospace; }
+h2 { font-size: 1.2em; font-weight: normal; white-space: nowrap; }
+        </style>
+    </head>
+    <body>
+        <h1>$(TITLE)</h1>
+        $(BODY)
+    </body>
+</html>
+H2 = <h2>$0</h2>
+H3 = <h3>$0</h3>
+STRONG = <strong>$0</strong>
+EM = <em>$0</em>
+DDOC_DECL = $(H2 $0)
+DDOC_DECL_DD = <div class="declaration-description">$0</div>
+
+DDOC_CLASS_MEMBERS = <div class="class-members">$0</div>
+DDOC_SUMMARY = $(P $0)
+DDOC_DESCRIPTION = $(P $0)
+
+DDOC_MEMBERS = <div class="members">$0</div>
+DDOC_ENUM_MEMBERS = <div class="enum-members">$0</div>
+DDOC_MODULE_MEMBERS = <div class="module-members">$0</div>
+DDOC_STRUCT_MEMBERS = <div class="struct-members">$0</div>
+DDOC_TEMPLATE_MEMBERS = <div class="template-members">$0</div>
