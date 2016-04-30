@@ -2,17 +2,34 @@
 
 # D-Money
 
-Provide a money data type, for easy and safe handling of currency amounts.
+Handling amounts of money safely and efficiently.
 
 Floating point is imprecise. Integer is fragile.
-Both lack convenience, e.g. for rounding.
+BigNum and similar are slow.
+All lack type safety, like forbidding addition different currencies.
 
 Features:
 
 * support different rounding modes
-* cannot mix currencies (e.g. EUR vs USD)
-* efficient (faster than BigNum)
+* can not mix currencies (e.g. EUR vs USD)
+* efficient integer arithmetic
 * overflow checking for arithmetic
+* type checking for currencies, precision, and rounding mode
+* yet generic equality and comparison
+
+
+```d
+    alias EUR = money!("EUR");
+
+    assert(EUR(100.0001) == EUR(100.00009));
+    assert(EUR(3.10) + EUR(1.40) == EUR(4.50));
+    assert(EUR(3.10) - EUR(1.40) == EUR(1.70));
+    assert(EUR(10.01) * 1.1 == EUR(11.011));
+
+    writefln("%d", EUR(3.6)); // "4EUR"
+    writefln("%f", EUR(3.141592)); // "3.1416EUR"
+    writefln("%.2f", EUR(3.145)); // "3.15EUR"
+```
 
 Scope is smaller than JSR 354, for example,
 which also considers conversion and meta data.
@@ -21,8 +38,6 @@ the currencies involved, the provider, the amount, and other factors.
 If you need meta data,
 then wrap `money` into your own data type.
 
-Internally, this uses a `long` data type.
-This limits the numbers depending on the number of decimals specified.
-A plain `money!"EUR"` type has a max of
-922337203685477.5807EUR,
-roughly 922 trillion.
+Available via [dub on code.dlang.org](http://code.dlang.org/packages/money).
+
+Licence is Boost v1.0.
