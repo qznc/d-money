@@ -139,7 +139,6 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
             const intpart = amount / pow10(dec_places);
             return fromLong(intpart % rhs * pow10(dec_places));
         }
-        // TODO support * / % ? Might be useful for taxes etc.
         else
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
@@ -170,7 +169,83 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
             const converted = T(rhs);
             return fromLong(amount % converted.amount);
         }
-        // TODO support * / % ? Might be useful for taxes etc.
+        else
+            static assert(0, "Operator " ~ op ~ " not implemented");
+    }
+
+    /// Can add and subtract money amounts of the same type.
+    void opOpAssign(string op)(const T rhs)
+    {
+        static if (op == "+")
+        {
+            bool overflow;
+            auto ret = adds(amount, rhs.amount, overflow);
+            if (overflow)
+                throw new OverflowException();
+            amount = ret;
+        }
+        else static if (op == "-")
+        {
+            bool overflow;
+            auto ret = subs(amount, rhs.amount, overflow);
+            if (overflow)
+                throw new OverflowException();
+            amount = ret;
+        }
+        else
+            static assert(0, "Operator " ~ op ~ " not implemented");
+    }
+
+    /// Can multiply, divide, and modulo with integer values.
+    void opOpAssign(string op)(const long rhs)
+    {
+        static if (op == "*")
+        {
+            bool overflow;
+            auto ret = muls(amount, rhs, overflow);
+            if (overflow)
+                throw new OverflowException();
+            amount = ret;
+        }
+        else static if (op == "/")
+        {
+            amount /= rhs;
+        }
+        else static if (op == "%")
+        {
+            const intpart = amount / pow10(dec_places);
+            amount = intpart % rhs * pow10(dec_places);
+        }
+        else
+            static assert(0, "Operator " ~ op ~ " not implemented");
+    }
+
+    /// Can multiply, divide, and modulo floating point numbers.
+    void opOpAssign(string op)(const real rhs)
+    {
+        static if (op == "*")
+        {
+            const converted = T(rhs);
+            bool overflow = false;
+            const result = muls(amount, converted.amount, overflow);
+            if (overflow)
+                throw new OverflowException();
+            amount = result / pow10(dec_places);
+        }
+        else static if (op == "/")
+        {
+            const converted = T(rhs);
+            bool overflow = false;
+            auto mult = muls(amount, pow10(dec_places), overflow);
+            if (overflow)
+                throw new OverflowException();
+            amount = mult / converted.amount;
+        }
+        else static if (op == "%")
+        {
+            const converted = T(rhs);
+            amount = amount % converted.amount;
+        }
         else
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
@@ -347,6 +422,47 @@ unittest
     assert(x > EURb(1.0001));
     assert(x < EURb(1.0101));
     assert(x <= EURb(1.01));
+}
+
+unittest
+{
+    alias EUR = money!("EUR");
+    auto x = EUR(2.22);
+    x += EUR(2.22);
+    assert(x == EUR(4.44));
+    x -= EUR(3.33);
+    assert(x == EUR(1.11));
+    x *= 4;
+    assert(x == EUR(4.44));
+    x /= 2;
+    assert(x == EUR(2.22));
+    x *= 2.0;
+    assert(x == EUR(4.44));
+    x /= 2.0;
+    assert(x == EUR(2.22));
+    x %= 3.0;
+    assert(x == EUR(2.22));
+    x %= 3;
+    assert(x == EUR(2));
+}
+
+unittest
+{
+    import std.exception : assertThrown;
+
+    alias EUR = money!("EUR");
+    EUR x = EUR.max;
+    EUR y = EUR.min;
+    assertThrown!OverflowException(x += EUR(1));
+    assert(x == EUR.max);
+    assertThrown!OverflowException(y -= EUR(1));
+    assert(y == EUR.min);
+    assertThrown!OverflowException(x *= 2);
+    assert(x == EUR.max);
+    assertThrown!OverflowException(x *= 2.0);
+    assert(x == EUR.max);
+    assertThrown!OverflowException(y /= 10.0);
+    assert(y == EUR.min);
 }
 
 /** Specifies rounding behavior **/
