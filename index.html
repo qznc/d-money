@@ -1,0 +1,258 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta name=viewport content="width=device-width, initial-scale=1">
+        <link type="text/css" href="theme.css" rel="stylesheet" media="all" />
+        <title>money ddoc</title>
+        <style>
+body { max-width: 30em; margin: 1em auto; padding: 1em; }
+h2,
+pre { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono", Consolas, Monaco, "Liberation Mono", Andale Mono, monospace; }
+h2 { font-size: 1.2em; font-weight: normal; white-space: nowrap; }
+        </style>
+    </head>
+    <body>
+        <h1>money</h1>
+        <p>Handling amounts of <u>money</u> safely and efficiently.
+</p>
+<p>An amount of <u>money</u> is a number tagged with a currency id like "EUR"
+ or "USD". Precision and rounding mode can be chosen as template
+ parameters.
+<br><br>
+
+ If you write code which handles <u>money</u>, you have to choose a data type
+ for it. Out of the box, D offers you floating point, integer, and
+ std.bigint. All of these have their problems.
+<br><br>
+
+ Floating point is inherently imprecise. If your dollar numbers become
+ too big, then you start getting too much or too little cents. This
+ is not acceptable as the errors accumulate. Also, floating point has
+ values like "infinity" and "not a number" and if those show up,
+ usually things break, if you did not prepare for it. Debugging then
+ means to work backwards how this happened, which is tedious and hard.
+<br><br>
+
+ Integer numbers do not suffer from imprecision, but they can not
+ represent numbers as big as floating point. Worse, if your numbers
+ become too big, then your CPU silently wraps them into negative
+ numbers. Like the imprecision with floating point, your data is
+ now corrupted without anyone noticing it yet. Also, fixed point
+ arithmetic with integers is easy to get wrong and you need a
+ fractional part to represent cents, for example.
+<br><br>
+
+ As a third option, there is std.bigint, which provides numbers
+ with arbitrary precision. Like floating point, the arithmetic is easy.
+ Like integer, precision is fine. The downside is performance.
+ Nevertheless, from the three options, this is the most safe one.
+<br><br>
+
+ Can we do even better?
+ If we design a custom data type for <u>money</u>, we can improve safety
+ even more. For example, certain arithmetics can be forbidden. What
+ does it mean to multiply two <u>money</u> amounts, for example? There is no
+ such thing as $² which makes any sense. However, you can certainly
+ multiply a <u>money</u> amount with a unitless number. A custom data type
+ can precisely allow and forbid this operations.
+<br><br>
+
+ Here the design decision is to use an integer for the internal
+ representation. This limits the amounts you can use. For example,
+ if you decide to use 4 digits behind the comma, the maximum number
+ is 922,337,203,685,477.5807 or roughly 922 trillion. The US debt is
+ currently in the trillions, so there are certainly cases where
+ this representation is not applicable. However, we can check overflow,
+ so if it happens, you get an exception thrown and notice it
+ right away. The upside of using an integer is performance and
+ a deterministic arithmetic all programmers are familiar with.
+
+</p>
+<b>License:</b><br>
+<a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>
+<br><br>
+<b>Authors:</b><br>
+Andreas Zwinkau<br><br>
+
+<div class="module-members"><h2><a name="money"></a>struct <u>money</u>(string currency, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP);
+</h2>
+<div class="declaration-description"><p>Holds an amount of <u>money</u></p>
+<b>Examples:</b><br>
+Basic usage
+<pre class="d_code">
+<font color=blue>alias</font> EUR = <u>money</u>!(<font color=red>"EUR"</font>);
+<font color=blue>assert</font>(EUR(100.0001) == EUR(100.00009));
+<font color=blue>assert</font>(EUR(3.10) + EUR(1.40) == EUR(4.50));
+<font color=blue>assert</font>(EUR(3.10) - EUR(1.40) == EUR(1.70));
+<font color=blue>assert</font>(EUR(10.01) * 1.1 == EUR(11.011));
+
+<font color=blue>import</font> std.format : format;
+
+<font color=green>// for writefln("%d", EUR(3.6));
+</font><font color=blue>assert</font>(format(<font color=red>"%d"</font>, EUR(3.6)) == <font color=red>"4EUR"</font>);
+<font color=blue>assert</font>(format(<font color=red>"%d"</font>, EUR(3.1)) == <font color=red>"3EUR"</font>);
+<font color=green>// for writefln("%f", EUR(3.141592));
+</font><font color=blue>assert</font>(format(<font color=red>"%f"</font>, EUR(3.141592)) == <font color=red>"3.1416EUR"</font>);
+<font color=blue>assert</font>(format(<font color=red>"%.2f"</font>, EUR(3.145)) == <font color=red>"3.15EUR"</font>);
+</pre>
+<br><br><b>Examples:</b><br>
+Overflow is an error, since silent corruption is worse
+<pre class="d_code">
+<font color=blue>import</font> std.exception : assertThrown;
+
+<font color=blue>alias</font> EUR = <u>money</u>!(<font color=red>"EUR"</font>);
+<font color=blue>auto</font> one = EUR(1);
+assertThrown!OverflowException(EUR.max + one);
+assertThrown!OverflowException(EUR.min - one);
+</pre>
+<br><br><b>Examples:</b><br>
+Arithmetic ignores rounding mode
+<pre class="d_code">
+<font color=blue>alias</font> EUR = <u>money</u>!(<font color=red>"EUR"</font>, 2, roundingMode.UP);
+<font color=blue>auto</font> one = EUR(1);
+<font color=blue>assert</font>(one != one / 3);
+</pre>
+<br><br><b>Examples:</b><br>
+Generic equality and order
+<pre class="d_code">
+<font color=blue>alias</font> USD = <u>money</u>!(<font color=red>"USD"</font>, 2);
+<font color=blue>alias</font> EURa = <u>money</u>!(<font color=red>"EUR"</font>, 2);
+<font color=blue>alias</font> EURb = <u>money</u>!(<font color=red>"EUR"</font>, 4);
+<font color=blue>alias</font> EURc = <u>money</u>!(<font color=red>"EUR"</font>, 4, roundingMode.DOWN);
+<font color=green>// cannot compile with different currencies
+</font><font color=blue>static</font> <font color=blue>assert</font>(!<font color=blue>__traits</font>(compiles, EURa(1) == USD(1)));
+<font color=green>// cannot compile with different dec_places
+</font><font color=blue>static</font> <font color=blue>assert</font>(!<font color=blue>__traits</font>(compiles, EURa(1) == EURb(1)));
+<font color=green>// can check equality if only rounding mode differs
+</font><font color=blue>assert</font>(EURb(1.01) == EURc(1.01));
+<font color=green>// cannot compare with different currencies
+</font><font color=blue>static</font> <font color=blue>assert</font>(!<font color=blue>__traits</font>(compiles, EURa(1) &lt; USD(1)));
+</pre>
+<br><br>
+<div class="struct-members"><h2><a name="money.this"></a>this(double <i>x</i>);
+</h2>
+<div class="declaration-description"><p>Usual contructor. Uses rmode on <i>x</i>.</p>
+
+</div>
+<h2><a name="money.init"></a>static immutable <u>init</u>;
+</h2>
+<div class="declaration-description"><p>default initialisation value is zero</p>
+
+</div>
+<h2><a name="money.max"></a>static immutable <u>max</u>;
+</h2>
+<div class="declaration-description"><p>maximum amount depends on dec_places</p>
+
+</div>
+<h2><a name="money.min"></a>static immutable <u>min</u>;
+</h2>
+<div class="declaration-description"><p>minimum amount depends on dec_places</p>
+
+</div>
+<h2><a name="money.opBinary"></a>const T <u>opBinary</u>(string op)(const T <i>rhs</i>);
+</h2>
+<div class="declaration-description"><p>Can add and subtract money amounts of the same type.</p>
+
+</div>
+<h2><a name="money.opBinary.2"></a>const T <u>opBinary</u>(string op)(const long <i>rhs</i>);
+</h2>
+<div class="declaration-description"><p>Can multiply, divide, and modulo with integer values.</p>
+
+</div>
+<h2><a name="money.opBinary.3"></a>const T <u>opBinary</u>(string op)(const real <i>rhs</i>);
+</h2>
+<div class="declaration-description"><p>Can multiply, divide, and modulo floating point numbers.</p>
+
+</div>
+<h2><a name="money.opEquals"></a>const bool <u>opEquals</u>(OT)(auto ref const OT <i>other</i>) if (isMoney!OT &amp;&amp; <i>other</i>.__currency == currency &amp;&amp; <i>other</i>.__dec_places == dec_places);
+</h2>
+<div class="declaration-description"><p>Can check equality with money amounts of the same concurrency and decimal places.</p>
+
+</div>
+<h2><a name="money.opCmp"></a>const int <u>opCmp</u>(OT)(const OT <i>other</i>) if (isMoney!OT &amp;&amp; <i>other</i>.__currency == currency);
+</h2>
+<div class="declaration-description"><p>Can compare with money amounts of the same concurrency.</p>
+
+</div>
+<h2><a name="money.toString"></a>const void <u>toString</u>(scope void delegate(const(char)[]) <i>sink</i>, FormatSpec!char <i>fmt</i>);
+</h2>
+<div class="declaration-description"><p>Can convert to string.</p>
+
+</div>
+</div>
+</div>
+<h2><a name="roundingMode"></a>enum <u>roundingMode</u>: int;
+</h2>
+<div class="declaration-description"><p>Specifies rounding behavior</p>
+
+<div class="enum-members"><h2><a name="roundingMode.UP"></a><u>UP</u></h2>
+<div class="declaration-description"><p>Round upwards, e.g. 3.1 up to 4.</p>
+
+</div>
+<h2><a name="roundingMode.DOWN"></a><u>DOWN</u></h2>
+<div class="declaration-description"><p>Round downwards, e.g. 3.9 down to 3.</p>
+
+</div>
+<h2><a name="roundingMode.HALF_UP"></a><u>HALF_UP</u></h2>
+<div class="declaration-description"><p>Round to nearest number, half way between round up, e.g. 3.5 to 4.</p>
+
+</div>
+<h2><a name="roundingMode.HALF_DOWN"></a><u>HALF_DOWN</u></h2>
+<div class="declaration-description"><p>Round to nearest number, half way between round dow, e.g. 3.5 to 3.</p>
+
+</div>
+<h2><a name="roundingMode.HALF_EVEN"></a><u>HALF_EVEN</u></h2>
+<div class="declaration-description"><p>Round to nearest number, half way between round to even number, e.g. 3.5 to 4.</p>
+
+</div>
+<h2><a name="roundingMode.HALF_ODD"></a><u>HALF_ODD</u></h2>
+<div class="declaration-description"><p>Round to nearest number, half way between round to odd number, e.g. 3.5 to 3.</p>
+
+</div>
+<h2><a name="roundingMode.HALF_TO_ZERO"></a><u>HALF_TO_ZERO</u></h2>
+<div class="declaration-description"><p>Round to nearest number, half way between round towards zero, e.g. -3.5 to -3.</p>
+
+</div>
+<h2><a name="roundingMode.HALF_FROM_ZERO"></a><u>HALF_FROM_ZERO</u></h2>
+<div class="declaration-description"><p>Round to nearest number, half way between round away from zero, e.g. -3.5 to -4.</p>
+
+</div>
+<h2><a name="roundingMode.UNNECESSARY"></a><u>UNNECESSARY</u></h2>
+<div class="declaration-description"><p>Throw exception if rounding would be necessary</p>
+
+</div>
+</div>
+</div>
+<h2><a name="round"></a>long <u>round</u>(roundingMode m)(long <i>x</i>, int <i>dec_place</i>);
+</h2>
+<div class="declaration-description"><p>Round an integer to a certain decimal place according to rounding mode</p>
+<b>Examples:</b><br>
+<pre class="d_code">
+<font color=blue>assert</font> (<u>round</u>!(roundingMode.DOWN)     (1009, 1) == 1000);
+<font color=blue>assert</font> (<u>round</u>!(roundingMode.UP)       (1001, 1) == 1010);
+<font color=blue>assert</font> (<u>round</u>!(roundingMode.HALF_UP)  (1005, 1) == 1010);
+<font color=blue>assert</font> (<u>round</u>!(roundingMode.HALF_DOWN)(1005, 1) == 1000);
+</pre>
+<br><br>
+</div>
+<h2><a name="round.2"></a>real <u>round</u>(real <i>x</i>, roundingMode <i>m</i>);
+</h2>
+<div class="declaration-description"><p>Round a float to an integer according to rounding mode</p>
+
+</div>
+<h2><a name="ForbiddenRounding"></a>class <u>ForbiddenRounding</u>: <u>object.Exception</u>;
+</h2>
+<div class="declaration-description"><p>Exception is thrown if rounding would have to happen,
+    but roundingMode.UNNECESSARY is specified.</p>
+
+</div>
+<h2><a name="OverflowException"></a>class <u>OverflowException</u>: <u>object.Exception</u>;
+</h2>
+<div class="declaration-description"><p>Overflow can happen with money arithmetic.</p>
+
+</div>
+</div>
+
+    </body>
+</html>
