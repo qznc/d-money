@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/qznc/d-money.svg?branch=master)](https://travis-ci.org/qznc/d-money)
+
 # D-Money
 
 Provide a money data type, for easy and safe handling of currency amounts.
