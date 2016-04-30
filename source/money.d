@@ -1,19 +1,51 @@
 /******
  * Handling amounts of money safely and efficiently.
  *
- * Amounts of money means that this is about numbers and they are tagged
- * with a currency id like "EUR" or "USD".
- * This modules wants to be a good 80% solution.
- * Not applicable for any situation, but most of them
- * and provide something better than anything easy.
+ * An amount of money is a number tagged with a currency id like "EUR"
+ * or "USD". Precision and rounding mode can be chosen as template
+ * parameters.
  *
- * Handling money safely means to avoid programming errors, which
- * lead to money vanishing to the unknown (e.g. rounding errors).
- * Deterministic arithmetic is necessary.
+ * If you write code which handles money, you have to choose a data type
+ * for it. Out of the box, D offers you floating point, integer, and
+ * std.bigint. All of these have their problems.
  *
- * Handling money efficiently means to provide good performance.
- * Mostly in contrast to using something with arbitrary precision,
- * like std.bigint or GNU BigNum.
+ * Floating point is inherently imprecise. If your dollar numbers become
+ * too big, then you start getting too much or too little cents. This
+ * is not acceptable as the errors accumulate. Also, floating point has
+ * values like "infinity" and "not a number" and if those show up,
+ * usually things break, if you did not prepare for it. Debugging then
+ * means to work backwards how this happened, which is tedious and hard.
+ *
+ * Integer numbers do not suffer from imprecision, but they can not
+ * represent numbers as big as floating point. Worse, if your numbers
+ * become too big, then your CPU silently wraps them into negative
+ * numbers. Like the imprecision with floating point, your data is
+ * now corrupted without anyone noticing it yet. Also, fixed point
+ * arithmetic with integers is easy to get wrong and you need a
+ * fractional part to represent cents, for example.
+ *
+ * As a third option, there is std.bigint, which provides numbers
+ * with arbitrary precision. Like floating point, the arithmetic is easy.
+ * Like integer, precision is fine. The downside is performance.
+ * Nevertheless, from the three options, this is the most safe one.
+ *
+ * Can we do even better?
+ * If we design a custom data type for money, we can improve safety
+ * even more. For example, certain arithmetics can be forbidden. What
+ * does it mean to multiply two money amounts, for example? There is no
+ * such thing as $² which makes any sense. However, you can certainly
+ * multiply a money amount with a unitless number. A custom data type
+ * can precisely allow and forbid this operations.
+ *
+ * Here the design decision is to use an integer for the internal
+ * representation. This limits the amounts you can use. For example,
+ * if you decide to use 4 digits behind the comma, the maximum number
+ * is 922,337,203,685,477.5807 or roughly 922 trillion. The US debt is
+ * currently in the trillions, so there are certainly cases where
+ * this representation is not applicable. However, we can check overflow,
+ * so if it happens, you get an exception thrown and notice it
+ * right away. The upside of using an integer is performance and
+ * a deterministic arithmetic all programmers are familiar with.
  *
  * License: $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Authors: Andreas Zwinkau
@@ -83,7 +115,6 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
                 throw new OverflowException();
             return ret;
         }
-        // TODO support * / % ? Might be useful for taxes etc.
         else
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
@@ -551,7 +582,7 @@ class ForbiddenRounding : Exception
     }
 }
 
-/** Overflow would happen with money arithmetic. */
+/** Overflow can happen with money arithmetic. */
 class OverflowException : Exception
 {
     public
