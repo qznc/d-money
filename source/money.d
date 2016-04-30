@@ -263,6 +263,14 @@ unittest
     static assert(!__traits(compiles, EURa(1) < USD(1)));
 }
 
+
+// TODO Using negative dec_places for big numbers?
+//unittest
+//{
+//    alias USD = money!("USD", -6);
+//    assert(USD(1_000_000.00) == USD(1_100_000.));
+//}
+
 enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
         && hasMember!(T, "__rmode"));
 static assert(isMoney!(money!"EUR"));
