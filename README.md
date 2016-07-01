@@ -21,7 +21,7 @@ Features:
 
 
 ```d
-    alias EUR = money!("EUR");
+    alias EUR = currency!("EUR");
 
     assert(EUR(100.0001) == EUR(100.00009));
     assert(EUR(3.10) + EUR(1.40) == EUR(4.50));
@@ -38,7 +38,7 @@ which also considers conversion and meta data.
 A conversion rate depends on target date and time,
 the currencies involved, the provider, the amount, and other factors.
 If you need meta data,
-then wrap `money` into your own data type.
+then wrap `currency` into your own data type.
 
 Available via [dub on code.dlang.org](http://code.dlang.org/packages/money).
 

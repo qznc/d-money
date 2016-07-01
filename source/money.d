@@ -65,11 +65,11 @@ import std.traits : hasMember;
     return 10 * pow10(x - 1);
 }
 
-/** Holds an amount of money **/
-struct money(string currency, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP)
+/** Holds an amount of currency **/
+struct currency(string currency_name, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP)
 {
     alias T = typeof(this);
-    enum __currency = currency;
+    enum __currency = currency_name;
     enum __dec_places = dec_places;
     enum __rmode = rmode;
     long amount;
@@ -251,14 +251,14 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
     }
 
     /// Can check equality with money amounts of the same concurrency and decimal places.
-    bool opEquals(OT)(auto ref const OT other) const if (isMoney!OT
-            && other.__currency == currency && other.__dec_places == dec_places)
+    bool opEquals(OT)(auto ref const OT other) const if (isCurrency!OT
+            && other.__currency == currency_name && other.__dec_places == dec_places)
     {
         return other.amount == amount;
     }
 
     /// Can compare with money amounts of the same concurrency.
-    int opCmp(OT)(const OT other) const if (isMoney!OT && other.__currency == currency)
+    int opCmp(OT)(const OT other) const if (isCurrency!OT && other.__currency == currency_name)
     {
         static if (dec_places == other.__dec_places)
         {
@@ -301,12 +301,12 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
                 decimals = decimals / pow10(n);
             }
             formattedWrite(sink, "%d", decimals);
-            sink(currency);
+            sink(currency_name);
             break;
         case 'd':
             auto ra = round!rmode(amount, dec_places);
             formattedWrite(sink, "%d", (ra / dec_mask));
-            sink(currency);
+            sink(currency_name);
             break;
         default:
             throw new Exception("Unknown format specifier: %" ~ fmt.spec);
@@ -317,7 +317,7 @@ struct money(string currency, int dec_places = 4, roundingMode rmode = roundingM
 /// Basic usage
 unittest
 {
-    alias EUR = money!("EUR");
+    alias EUR = currency!("EUR");
     assert(EUR(100.0001) == EUR(100.00009));
     assert(EUR(3.10) + EUR(1.40) == EUR(4.50));
     assert(EUR(3.10) - EUR(1.40) == EUR(1.70));
@@ -338,7 +338,7 @@ unittest
 {
     import std.exception : assertThrown;
 
-    alias EUR = money!("EUR");
+    alias EUR = currency!("EUR");
     auto one = EUR(1);
     assertThrown!OverflowException(EUR.max + one);
     assertThrown!OverflowException(EUR.min - one);
@@ -347,7 +347,7 @@ unittest
 /// Arithmetic ignores rounding mode
 @safe unittest
 {
-    alias EUR = money!("EUR", 2, roundingMode.UP);
+    alias EUR = currency!("EUR", 2, roundingMode.UP);
     auto one = EUR(1);
     assert(one != one / 3);
 }
@@ -355,10 +355,10 @@ unittest
 /// Generic equality and order
 @safe unittest
 {
-    alias USD = money!("USD", 2);
-    alias EURa = money!("EUR", 2);
-    alias EURb = money!("EUR", 4);
-    alias EURc = money!("EUR", 4, roundingMode.DOWN);
+    alias USD = currency!("USD", 2);
+    alias EURa = currency!("EUR", 2);
+    alias EURb = currency!("EUR", 4);
+    alias EURc = currency!("EUR", 4, roundingMode.DOWN);
     // cannot compile with different currencies
     static assert(!__traits(compiles, EURa(1) == USD(1)));
     // cannot compile with different dec_places
@@ -373,18 +373,18 @@ unittest
 // TODO Using negative dec_places for big numbers?
 //@nogc @safe unittest
 //{
-//    alias USD = money!("USD", -6);
+//    alias USD = currency!("USD", -6);
 //    assert(USD(1_000_000.00) == USD(1_100_000.));
 //}
 
-enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
+enum isCurrency(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
         && hasMember!(T, "__rmode"));
-static assert(isMoney!(money!"EUR"));
+static assert(isCurrency!(currency!"EUR"));
 
 // TODO @safe (due to std.format.format)
 unittest
 {
-    alias EUR = money!("EUR");
+    alias EUR = currency!("EUR");
     import std.format : format;
     assert(format("%s", EUR(3.1)) == "3.1000EUR");
 
@@ -394,7 +394,7 @@ unittest
 
 @safe unittest
 {
-    alias EUR = money!("EUR");
+    alias EUR = currency!("EUR");
     assert(EUR(5) < EUR(6));
     assert(EUR(6) > EUR(5));
     assert(EUR(5) >= EUR(5));
@@ -408,7 +408,7 @@ unittest
 
 @safe unittest
 {
-    alias EUR = money!("EUR");
+    alias EUR = currency!("EUR");
     auto x = EUR(42);
     assert(EUR(84) == x * 2);
     static assert(!__traits(compiles, x * x));
@@ -418,8 +418,8 @@ unittest
 
 @safe unittest
 {
-    alias EURa = money!("EUR", 2);
-    alias EURb = money!("EUR", 4);
+    alias EURa = currency!("EUR", 2);
+    alias EURb = currency!("EUR", 4);
     auto x = EURa(1.01);
     assert(x > EURb(1.0001));
     assert(x < EURb(1.0101));
@@ -428,7 +428,7 @@ unittest
 
 @safe unittest
 {
-    alias EUR = money!("EUR");
+    alias EUR = currency!("EUR");
     auto x = EUR(2.22);
     x += EUR(2.22);
     assert(x == EUR(4.44));
@@ -452,7 +452,7 @@ unittest
 {
     import std.exception : assertThrown;
 
-    alias EUR = money!("EUR");
+    alias EUR = currency!("EUR");
     EUR x = EUR.max;
     EUR y = EUR.min;
     assertThrown!OverflowException(x += EUR(1));
