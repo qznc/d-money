@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/qznc/d-money.svg?branch=master)](https://travis-ci.org/qznc/d-money)
 [![Coverage Status](https://coveralls.io/repos/github/qznc/d-money/badge.svg?branch=master)](https://coveralls.io/github/qznc/d-money?branch=master)
+[![Dub Package](https://img.shields.io/dub/v/money.svg)](https://code.dlang.org/packages/money)
 
 # D-Money
 
