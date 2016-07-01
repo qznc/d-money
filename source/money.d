@@ -334,7 +334,7 @@ unittest
 }
 
 /// Overflow is an error, since silent corruption is worse
-unittest
+@safe unittest
 {
     import std.exception : assertThrown;
 
@@ -345,7 +345,7 @@ unittest
 }
 
 /// Arithmetic ignores rounding mode
-unittest
+@safe unittest
 {
     alias EUR = money!("EUR", 2, roundingMode.UP);
     auto one = EUR(1);
@@ -353,7 +353,7 @@ unittest
 }
 
 /// Generic equality and order
-unittest
+@safe unittest
 {
     alias USD = money!("USD", 2);
     alias EURa = money!("EUR", 2);
@@ -371,7 +371,7 @@ unittest
 
 
 // TODO Using negative dec_places for big numbers?
-//unittest
+//@nogc @safe unittest
 //{
 //    alias USD = money!("USD", -6);
 //    assert(USD(1_000_000.00) == USD(1_100_000.));
@@ -381,7 +381,9 @@ enum isMoney(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
         && hasMember!(T, "__rmode"));
 static assert(isMoney!(money!"EUR"));
 
-unittest {
+// TODO @safe (due to std.format.format)
+unittest
+{
     alias EUR = money!("EUR");
     import std.format : format;
     assert(format("%s", EUR(3.1)) == "3.1000EUR");
@@ -390,7 +392,7 @@ unittest {
     assertThrown!Exception(format("%x", EUR(3.1)));
 }
 
-unittest
+@safe unittest
 {
     alias EUR = money!("EUR");
     assert(EUR(5) < EUR(6));
@@ -404,7 +406,7 @@ unittest
     assertThrown!OverflowException(EUR.max * 2.0);
 }
 
-unittest
+@safe unittest
 {
     alias EUR = money!("EUR");
     auto x = EUR(42);
@@ -414,7 +416,7 @@ unittest
     assert(EUR(2) == x % 4);
 }
 
-unittest
+@safe unittest
 {
     alias EURa = money!("EUR", 2);
     alias EURb = money!("EUR", 4);
@@ -424,7 +426,7 @@ unittest
     assert(x <= EURb(1.01));
 }
 
-unittest
+@safe unittest
 {
     alias EUR = money!("EUR");
     auto x = EUR(2.22);
@@ -446,7 +448,7 @@ unittest
     assert(x == EUR(2));
 }
 
-unittest
+@safe unittest
 {
     import std.exception : assertThrown;
 
@@ -605,7 +607,7 @@ body
 
 // dfmt off
 ///
-unittest
+@nogc @safe unittest
 {
     assert (round!(roundingMode.DOWN)     (1009, 1) == 1000);
     assert (round!(roundingMode.UP)       (1001, 1) == 1010);
@@ -639,7 +641,7 @@ unittest
     // dfmt on
 }
 
-unittest
+@safe unittest
 {
     import std.exception : assertThrown;
 
@@ -648,8 +650,8 @@ unittest
 }
 
 /** Round a float to an integer according to rounding mode */
-//pure nothrow @nogc @trusted
-real round(real x, roundingMode m) body
+// TODO pure nothrow @nogc (Phobos...)
+real round(real x, roundingMode m) @trusted
 {
     FloatingPointControl fpctrl;
     final switch (m) with (roundingMode)
@@ -674,7 +676,8 @@ real round(real x, roundingMode m) body
     }
 }
 
-unittest {
+@safe unittest
+{
     assert(round(3.5, roundingMode.HALF_DOWN) == 3.0);
     assert(round(3.8, roundingMode.HALF_TO_ZERO) == 3.0);
 
