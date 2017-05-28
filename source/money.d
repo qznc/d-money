@@ -68,6 +68,7 @@ import std.traits : hasMember;
 pure @safe nothrow private string decimals_format(int x)()
 {
     import std.conv : text;
+
     return "%0" ~ text(x) ~ "d";
 }
 
@@ -257,14 +258,16 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     }
 
     /// Can check equality with money amounts of the same concurrency and decimal places.
-    bool opEquals(OT)(auto ref const OT other) const if (isCurrency!OT
-            && other.__currency == currency_name && other.__dec_places == dec_places)
+    bool opEquals(OT)(auto ref const OT other) const 
+            if (isCurrency!OT && other.__currency == currency_name
+                && other.__dec_places == dec_places)
     {
         return other.amount == amount;
     }
 
     /// Can compare with money amounts of the same concurrency.
-    int opCmp(OT)(const OT other) const if (isCurrency!OT && other.__currency == currency_name)
+    int opCmp(OT)(const OT other) const 
+            if (isCurrency!OT && other.__currency == currency_name)
     {
         static if (dec_places == other.__dec_places)
         {
@@ -306,7 +309,8 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
                 decimals = round!(rmode)(decimals, n);
                 decimals = decimals / pow10(n);
                 import std.conv : text;
-                formattedWrite(sink, "%0"~text(fmt.precision)~"d", decimals);
+
+                formattedWrite(sink, "%0" ~ text(fmt.precision) ~ "d", decimals);
             }
             else
             {
@@ -382,7 +386,6 @@ unittest
     static assert(!__traits(compiles, EURa(1) < USD(1)));
 }
 
-
 // TODO Using negative dec_places for big numbers?
 //@nogc @safe unittest
 //{
@@ -390,8 +393,8 @@ unittest
 //    assert(USD(1_000_000.00) == USD(1_100_000.));
 //}
 
-enum isCurrency(T) = (hasMember!(T, "amount") && hasMember!(T, "__dec_places")
-        && hasMember!(T, "__rmode"));
+enum isCurrency(T) = (hasMember!(T, "amount") && hasMember!(T,
+            "__dec_places") && hasMember!(T, "__rmode"));
 static assert(isCurrency!(currency!"EUR"));
 
 // TODO @safe (due to std.format.format)
@@ -399,9 +402,11 @@ unittest
 {
     alias EUR = currency!("EUR");
     import std.format : format;
+
     assert(format("%s", EUR(3.1)) == "3.1000EUR");
 
     import std.exception : assertThrown;
+
     assertThrown!Exception(format("%x", EUR(3.1)));
 }
 
@@ -415,6 +420,7 @@ unittest
     assert(EUR(6) != EUR(5));
 
     import std.exception : assertThrown;
+
     assertThrown!OverflowException(EUR.max * 2);
     assertThrown!OverflowException(EUR.max * 2.0);
 }
@@ -695,6 +701,7 @@ real round(real x, roundingMode m) @trusted
     assert(round(3.8, roundingMode.HALF_TO_ZERO) == 3.0);
 
     import std.exception : assertThrown;
+
     assertThrown!ForbiddenRounding(round(3.1, roundingMode.UNNECESSARY));
     assertThrown!ForbiddenRounding(round(3.1, roundingMode.HALF_EVEN));
     assertThrown!ForbiddenRounding(round(3.1, roundingMode.HALF_ODD));
