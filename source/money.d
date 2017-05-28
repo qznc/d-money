@@ -65,6 +65,12 @@ import std.traits : hasMember;
     return 10 * pow10(x - 1);
 }
 
+pure @safe nothrow private string decimals_format(int x)()
+{
+    import std.conv : text;
+    return "%0" ~ text(x) ~ "d";
+}
+
 /** Holds an amount of currency **/
 struct currency(string currency_name, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP)
 {
@@ -299,8 +305,13 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
                 auto n = dec_places - fmt.precision;
                 decimals = round!(rmode)(decimals, n);
                 decimals = decimals / pow10(n);
+                import std.conv : text;
+                formattedWrite(sink, "%0"~text(fmt.precision)~"d", decimals);
             }
-            formattedWrite(sink, "%d", decimals);
+            else
+            {
+                formattedWrite(sink, decimals_format!dec_places(), decimals);
+            }
             sink(currency_name);
             break;
         case 'd':
@@ -331,6 +342,8 @@ unittest
     // for writefln("%f", EUR(3.141592));
     assert(format("%f", EUR(3.141592)) == "3.1416EUR");
     assert(format("%.2f", EUR(3.145)) == "3.15EUR");
+    // From issue #5
+    assert(format("%.4f", EUR(0.01234)) == "0.0123EUR");
 }
 
 /// Overflow is an error, since silent corruption is worse
