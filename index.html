@@ -1,27 +1,485 @@
-<!DOCTYPE HTML>
+
+<!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-        <meta name=viewport content="width=device-width, initial-scale=1">
-        <link type="text/css" href="theme.css" rel="stylesheet" media="all" />
-        <title>money ddoc</title>
-        <style>
-body { max-width: 30em; margin: 1em auto; padding: 1em; }
-h2,
-pre { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono", Consolas, Monaco, "Liberation Mono", Andale Mono, monospace; }
-h2 { font-size: 1.2em; font-weight: normal; white-space: nowrap; }
-        </style>
-    </head>
-    <body>
-        <h1>money</h1>
-        <p>Handling amounts of <u>money</u> safely and efficiently.
-</p>
-<p>An amount of <u>money</u> is a number tagged with a currency id like "EUR"
+  <head>
+    <meta charset="UTF-8">
+    <title>money</title>
+    <style type="text/css" media="screen">
+      html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p,
+      blockquote, pre, a, abbr, address, cite, code, del, dfn, em, figure,
+      img, ins, kbd, q, s, samp, small, strong, sub, sup, var, b, u, i, dl,
+      dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption,
+      tbody, tfoot, thead, tr, th, td {
+        background: transparent none repeat scroll 0 0;
+        border: 0 none;
+        font-size: 100%;
+        margin: 0;
+        outline: 0 none;
+        padding: 0;
+        vertical-align: baseline;
+      }
+
+      .color_red { color: #dc322f; }
+      .color_blue { color: #268bd2; }
+      .color_green { color: #859901; }
+      .color_yellow { color: #b58901; }
+      .color_black { color: black; }
+      .color_white { color: white; }
+
+      .font_big {
+        font-size: 1.2em;
+      }
+
+      .ddoc_section_h {
+        font-weight: bold;
+        font-size: 13px;
+        line-height: 19.5px;
+        margin-top: 11px;
+        display: block;
+      }
+
+      body.dlang .dlang {
+        display: inline-block;
+      }
+
+      body.dlang .declaration .dlang {
+          display: block;
+      }
+
+      body.dlang .ddoc_header_anchor a.dlang {
+        display: block;
+        color: rgba(0, 136, 204, 1);
+        text-decoration: none;
+      }
+
+      body.dlang .ddoc_header_anchor .code {
+        color: rgba(0, 136, 204, 1);
+      }
+
+      #ddoc_main .module {
+          border-color: currentColor rgba(233, 233, 233, 1) rgba(233, 233, 233, 1);
+          border-style: none solid solid;
+          border-width: 0 1px 1px;
+          overflow-x: hidden;
+          padding: 15px;
+      }
+
+      #ddoc_main .section .section {
+        margin-top: 0;
+      }
+
+      #ddoc_main .ddoc_module_members_section {
+          padding: 1px 0 0;
+          transition: transform 0.3s ease 0s;
+      }
+
+      #ddoc_main .ddoc_member, #ddoc_main .ddoc_module_members section.intro {
+          background: #fff none repeat scroll 0 0;
+          list-style-type: none;
+          width: 100%;
+      }
+
+      #ddoc_main .ddoc_header_anchor {
+          font-size: 1.4em;
+          transition: transform 0.3s ease 0s;
+      }
+
+      #ddoc_main .ddoc_header_anchor > .code {
+          display: inline-block;
+
+      }
+
+      #ddoc_main .ddoc_decl {
+        background-color: transparent;
+        height: 100%;
+        left: 0;
+        top: 0;
+        padding: 0;
+        padding-left: 15px;
+      }
+
+      #ddoc_main .ddoc_decl .section, #ddoc_main .section.ddoc_sections {
+        background: white none repeat scroll 0 0;
+        margin: 0;
+        padding: 5px;
+        position: relative;
+        border-radius: 5px;
+      }
+
+      #ddoc_main .ddoc_decl .section h4, #ddoc_main .section.ddoc_sections h4 {
+        font-size: 13px;
+        line-height: 1.5;
+        margin-top: 21px;
+      }
+
+      #ddoc_main .section .declaration {
+          margin-top: 21px;
+      }
+
+      #ddoc_main .section .declaration .code {
+          color: rgba(0, 0, 0, 1);
+          margin-bottom: 15px;
+          padding-bottom: 6px;
+      }
+
+      #ddoc_main .declaration div .para {
+          margin-bottom: 0;
+      }
+
+      #ddoc_main .ddoc_params .graybox tr td:first-of-type {
+        padding: 7px;
+        text-align: right;
+        vertical-align: top;
+        word-break: normal;
+        white-space: nowrap;
+      }
+
+      #ddoc_main .ddoc_params .graybox {
+        border: 0 none;
+      }
+
+      #ddoc_main .ddoc_params .graybox td {
+        border-color: rgba(214, 214, 214, 1);
+      }
+
+      #ddoc_main .ddoc_params .graybox tr:first-child > td {
+        border-top: 0 none;
+      }
+
+      #ddoc_main .ddoc_params .graybox tr:last-child > td {
+        border-bottom: 0 none;
+      }
+
+      #ddoc_main .ddoc_params .graybox tr > td:first-child {
+        border-left: 0 none;
+      }
+
+      #ddoc_main .ddoc_params .graybox tr > td:last-child {
+        border-right: 0 none;
+        width: 100%;
+      }
+
+      #ddoc_main em.term, #ddoc_main em.term .code {
+        color: rgba(65, 65, 65, 1);
+        font-size: 12px;
+        font-style: italic;
+        line-height: 1.5;
+      }
+
+      #ddoc_main .see-also {
+        cursor: pointer;
+        font-family: Menlo,monospace;
+      }
+
+      #ddoc_main .ddoc_decl .section > div:last-of-type {
+        margin-bottom: 15px;
+      }
+
+      #ddoc_main .ddoc_member, #ddoc_main .ddoc_module_members {
+          transition: transform 0.3s ease 0s;
+      }
+
+      #ddoc_main .code_sample {
+        background: inherit;
+      }
+
+      #ddoc_main .declaration .code-line {
+          display: block;
+          font: 1em Menlo,monospace;
+      }
+
+      #ddoc_main a[name] {
+        margin: -112px 0 0;
+        padding-top: 112px;
+      }
+
+      #ddoc_main .ddoc_decl td {
+        max-width: inherit;
+      }
+
+      #ddoc_main .declaration a {
+        color: inherit;
+      }
+
+      #ddoc_main .declaration a:hover {
+          color: rgba(0, 136, 204, 1);
+          text-decoration: underline;
+      }
+
+      body.ddoc {
+        background-color: transparent;
+        color: rgba(0, 0, 0, 1);
+        font-family: Helvetica,Arial,sans-serif;
+        font-size: 62.5%;
+        margin: 0;
+        border: 0;
+        left: 0;
+        top: 0;
+        padding: 0;
+      }
+
+      .ddoc a[name] {
+        display: block;
+        height: 0;
+        margin: -85px 0 0;
+        padding-top: 85px;
+        width: 0;
+      }
+
+      .ddoc .module {
+          border-color: transparent;
+          background-color: rgba(255, 255, 255, 1);
+          border-color: currentColor rgba(233, 233, 233, 1) rgba(233, 233, 233, 1);
+          border-image: none;
+          border-style: none solid solid;
+          border-width: 0 1px 1px;
+          box-shadow: 0 0 1px rgba(0, 0, 0, 0.07);
+          display: block;
+          margin-left: 0;
+          min-height: calc(100% - 173px);
+          overflow: auto;
+          padding-bottom: 100px;
+      }
+
+      .ddoc .content_wrapper {
+          background-color: rgba(242, 242, 242, 1);
+          margin: 0 auto;
+          max-width: 980px;
+      }
+
+      .ddoc .section {
+        padding: 15px 25px 30px;
+      }
+
+      .ddoc .section .section {
+        margin: 30px 0 0;
+        padding: 0;
+      }
+
+      .ddoc .para {
+        color: rgba(65, 65, 65, 1);
+        font-size: 1.4em;
+        line-height: 145%;
+        margin-bottom: 15px;
+      }
+
+      .ddoc .ddoc_examples .para {
+        margin-bottom: 0;
+      }
+
+      .ddoc .module_name {
+          color: rgba(0, 0, 0, 1);
+          display: block;
+          font-family: Helvetica;
+          font-size: 2.8em;
+          font-weight: 100;
+          margin-bottom: 0;
+          padding: 15px 0;
+      }
+
+      .ddoc .module a {
+          color: rgba(0, 136, 204, 1);
+          text-decoration: none;
+      }
+
+      .ddoc .code {
+        color: rgba(128, 128, 128, 1);
+        font-family: Menlo,monospace;
+        font-size: 0.85em;
+        word-wrap: break-word;
+      }
+
+      .ddoc .code i {
+        font-style: normal;
+      }
+
+      .ddoc .code .code {
+        font-size: 1em;
+      }
+
+      .ddoc .code_sample {
+        background-clip: padding-box;
+        margin: 1px 0;
+        text-align: left;
+      }
+
+      .ddoc .code_sample {
+        display: block;
+        font-size: 1.4em;
+        margin-left: 21px;
+      }
+
+      .ddoc ol .code_sample {
+        font-size: 1em;
+      }
+
+      .ddoc .code_lines {
+        counter-reset: li;
+        line-height: 1.6em;
+        list-style: outside none none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .ddoc .code_listing .code_sample div {
+        margin-left: 13px;
+        width: 93%;
+      }
+
+      .ddoc .code_listing .code_sample div .code_lines li {
+        list-style-type: none;
+        margin: 0;
+        padding-right: 10px;
+      }
+
+      .ddoc .code_sample div .code_lines li::before {
+        margin-left: -33px;
+        margin-right: 25px;
+      }
+
+      .ddoc .code_sample div .code_lines li:nth-child(n+10)::before {
+        margin-left: -39px;
+        margin-right: 25px;
+      }
+
+      .ddoc .code_sample div .code_lines li:nth-child(n+100)::before {
+        margin-left: -46px;
+        margin-right: 25px;
+      }
+
+      .ddoc .code_sample .code_lines .code {
+        color: #000;
+      }
+
+      .ddoc div.dlang {
+        margin: 10px 0 21px;
+        padding: 4px 0 2px 10px;
+      }
+
+      .ddoc div.dlang {
+          margin: 10px 0 21px;
+          padding: 4px 0 2px 10px;
+      }
+
+      .ddoc div.dlang {
+        border-left: 5px solid rgba(0, 155, 51, 0.2);
+      }
+
+      .ddoc .code_lines li::before {
+        color: rgba(128, 128, 128, 1);
+        content: counter(li, decimal);
+        counter-increment: li;
+        font-family: Menlo,monospace;
+        font-size: 0.9em;
+        margin-right: 16px;
+      }
+
+      .ddoc .code_lines li {
+        padding-left: 0;
+        white-space: pre-wrap;
+      }
+
+      .ddoc .code_lines li:only-of-type::before {
+        color: rgba(255, 255, 255, 1);
+        content: " ";
+      }
+
+      .ddoc .code_lines li:only-of-type {
+        color: rgba(255, 255, 255, 1);
+        content: " ";
+      }
+
+      .ddoc .code_lines li:nth-child(n+10) {
+        text-indent: -17px;
+      }
+
+      .ddoc .code_lines li:nth-child(n+10)::before {
+        margin-right: 12px;
+      }
+
+      .ddoc .graybox {
+        border: 1px solid rgba(233, 233, 233, 1);
+        border-collapse: collapse;
+        border-spacing: 0;
+        empty-cells: hide;
+        margin: 20px 0 36px;
+        text-align: left;
+      }
+
+      .ddoc .graybox p {
+        margin: 0;
+        min-width: 50px;
+      }
+
+      .ddoc td {
+        border: 1px solid rgba(233, 233, 233, 1);
+        margin: 0;
+        max-width: 260px;
+        padding: 5px 25px 5px 10px;
+        vertical-align: middle;
+      }
+
+      .punctuation {
+        color: rgba(0, 0, 0, 1);
+      }
+
+      .comment {
+        color: rgba(0, 131, 18, 1);
+      }
+
+      .operator {
+        color: #000;
+      }
+
+      .keyword {
+        color: rgba(170, 13, 145, 1);
+      }
+
+      .keyword_type {
+        color: rgba(170, 51, 145, 1);
+      }
+
+      .string_literal {
+        color: rgba(196, 26, 22, 1);
+      }
+
+      .ddoc_psuper_symbol {
+        color: rgba(92, 38, 153, 1);
+      }
+
+      .param {
+        color: rgba(0, 0, 0, 1);
+      }
+
+      .psymbol {
+        color: rgba(0, 0, 0, 1);
+      }
+
+      .ddoc_member_header .ddoc_header_anchor .code {
+        font-size: 1em;
+      }
+    </style>
+  </head>
+  <body id="ddoc_main" class="ddoc dlang">
+    <div class="content_wrapper">
+      <article class="module">
+        <h1 class="module_name">money</h1>
+        <section id="module_content"><section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Handling amounts of <code class="code">money</code> safely and efficiently.
+
+  </p>
+</div>
+<div class="ddoc_description">
+  <h4>Discussion</h4>
+  <p class="para">
+    An amount of <code class="code">money</code> is a number tagged with a currency id like "EUR"
  or "USD". Precision and rounding mode can be chosen as template
  parameters.
 <br><br>
 
- If you write code which handles <u>money</u>, you have to choose a data type
+ If you write code which handles <code class="code">money</code>, you have to choose a data type
  for it. Out of the box, D offers you floating point, integer, and
  std.bigint. All of these have their problems.
 <br><br>
@@ -50,11 +508,11 @@ h2 { font-size: 1.2em; font-weight: normal; white-space: nowrap; }
 <br><br>
 
  Can we do even better?
- If we design a custom data type for <u>money</u>, we can improve safety
+ If we design a custom data type for <code class="code">money</code>, we can improve safety
  even more. For example, certain arithmetics can be forbidden. What
- does it mean to multiply two <u>money</u> amounts, for example? There is no
+ does it mean to multiply two <code class="code">money</code> amounts, for example? There is no
  such thing as $² which makes any sense. However, you can certainly
- multiply a <u>money</u> amount with a unitless number. A custom data type
+ multiply a <code class="code">money</code> amount with a unitless number. A custom data type
  can precisely allow and forbid this operations.
 <br><br>
 
@@ -68,191 +526,1118 @@ h2 { font-size: 1.2em; font-weight: normal; white-space: nowrap; }
  right away. The upside of using an integer is performance and
  a deterministic arithmetic all programmers are familiar with.
 
-</p>
-<b>License:</b><br>
-<a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>
-<br><br>
-<b>Authors:</b><br>
-Andreas Zwinkau<br><br>
 
-<div class="module-members"><h2><a name="money"></a>struct <u>money</u>(string currency, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP);
-</h2>
-<div class="declaration-description"><p>Holds an amount of <u>money</u></p>
-<b>Examples:</b><br>
-Basic usage
-<pre class="d_code">
-<font color=blue>alias</font> EUR = <u>money</u>!(<font color=red>"EUR"</font>);
-<font color=blue>assert</font>(EUR(100.0001) == EUR(100.00009));
-<font color=blue>assert</font>(EUR(3.10) + EUR(1.40) == EUR(4.50));
-<font color=blue>assert</font>(EUR(3.10) - EUR(1.40) == EUR(1.70));
-<font color=blue>assert</font>(EUR(10.01) * 1.1 == EUR(11.011));
+  </p>
+</div>
+<div class="ddoc_license">
+  <h4>License</h4>
+  <p class="para">
+    <a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>
 
-<font color=blue>import</font> std.format : format;
+  </p>
+</div>
+<div class="ddoc_authors">
+  <h4>Authors</h4>
+  <p class="para">
+    Andreas Zwinkau
+  </p>
+</div>
 
-<font color=green>// for writefln("%d", EUR(3.6));
-</font><font color=blue>assert</font>(format(<font color=red>"%d"</font>, EUR(3.6)) == <font color=red>"4EUR"</font>);
-<font color=blue>assert</font>(format(<font color=red>"%d"</font>, EUR(3.1)) == <font color=red>"3EUR"</font>);
-<font color=green>// for writefln("%f", EUR(3.141592));
-</font><font color=blue>assert</font>(format(<font color=red>"%f"</font>, EUR(3.141592)) == <font color=red>"3.1416EUR"</font>);
-<font color=blue>assert</font>(format(<font color=red>"%.2f"</font>, EUR(3.145)) == <font color=red>"3.15EUR"</font>);
-</pre>
-<br><br><b>Examples:</b><br>
-Overflow is an error, since silent corruption is worse
-<pre class="d_code">
-<font color=blue>import</font> std.exception : assertThrown;
+</section>
+<section class="section ddoc_module_members_section">
+  <div class="ddoc_module_members">
+    <ul class="ddoc_members">
+  <li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency" id="currency"><code class="code">currency</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency"></span>struct <code class="code">currency</code>(string currency_name, int dec_places = 4, roundingMode rmode = roundingMode.HALF_UP);
 
-<font color=blue>alias</font> EUR = <u>money</u>!(<font color=red>"EUR"</font>);
-<font color=blue>auto</font> one = EUR(1);
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Holds an amount of <code class="code">currency</code>
+  </p>
+</div>
+<div class="ddoc_examples">
+  <h4>Examples</h4>
+  <p class="para">
+    Basic usage
+
+<section class="code_listing">
+  <div class="code_sample">
+    <div class="dlang">
+      <ol class="code_lines">
+        <li><code class="code"><span class="keyword">alias</span> EUR = <span class="psymbol">currency</span>!(<span class="string_literal">"EUR"</span>);
+<span class="keyword">assert</span>(EUR(100.0001) == EUR(100.00009));
+<span class="keyword">assert</span>(EUR(3.10) + EUR(1.40) == EUR(4.50));
+<span class="keyword">assert</span>(EUR(3.10) - EUR(1.40) == EUR(1.70));
+<span class="keyword">assert</span>(EUR(10.01) * 1.1 == EUR(11.011));
+
+<span class="keyword">import</span> std.format : format;
+
+<span class="comment">// for writefln("%d", EUR(3.6));
+</span><span class="keyword">assert</span>(format(<span class="string_literal">"%d"</span>, EUR(3.6)) == <span class="string_literal">"4EUR"</span>);
+<span class="keyword">assert</span>(format(<span class="string_literal">"%d"</span>, EUR(3.1)) == <span class="string_literal">"3EUR"</span>);
+<span class="comment">// for writefln("%f", EUR(3.141592));
+</span><span class="keyword">assert</span>(format(<span class="string_literal">"%f"</span>, EUR(3.141592)) == <span class="string_literal">"3.1416EUR"</span>);
+<span class="keyword">assert</span>(format(<span class="string_literal">"%.2f"</span>, EUR(3.145)) == <span class="string_literal">"3.15EUR"</span>);
+<span class="comment">// From issue #5
+</span><span class="keyword">assert</span>(format(<span class="string_literal">"%.4f"</span>, EUR(0.01234)) == <span class="string_literal">"0.0123EUR"</span>);
+</code></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+  </p>
+</div><div class="ddoc_examples">
+  <h4>Examples</h4>
+  <p class="para">
+    Overflow is an error, since silent corruption is worse
+
+<section class="code_listing">
+  <div class="code_sample">
+    <div class="dlang">
+      <ol class="code_lines">
+        <li><code class="code"><span class="keyword">import</span> std.exception : assertThrown;
+
+<span class="keyword">alias</span> EUR = <span class="psymbol">currency</span>!(<span class="string_literal">"EUR"</span>);
+<span class="keyword">auto</span> one = EUR(1);
 assertThrown!OverflowException(EUR.max + one);
 assertThrown!OverflowException(EUR.min - one);
-</pre>
-<br><br><b>Examples:</b><br>
-Arithmetic ignores rounding mode
-<pre class="d_code">
-<font color=blue>alias</font> EUR = <u>money</u>!(<font color=red>"EUR"</font>, 2, roundingMode.UP);
-<font color=blue>auto</font> one = EUR(1);
-<font color=blue>assert</font>(one != one / 3);
-</pre>
-<br><br><b>Examples:</b><br>
-Generic equality and order
-<pre class="d_code">
-<font color=blue>alias</font> USD = <u>money</u>!(<font color=red>"USD"</font>, 2);
-<font color=blue>alias</font> EURa = <u>money</u>!(<font color=red>"EUR"</font>, 2);
-<font color=blue>alias</font> EURb = <u>money</u>!(<font color=red>"EUR"</font>, 4);
-<font color=blue>alias</font> EURc = <u>money</u>!(<font color=red>"EUR"</font>, 4, roundingMode.DOWN);
-<font color=green>// cannot compile with different currencies
-</font><font color=blue>static</font> <font color=blue>assert</font>(!<font color=blue>__traits</font>(compiles, EURa(1) == USD(1)));
-<font color=green>// cannot compile with different dec_places
-</font><font color=blue>static</font> <font color=blue>assert</font>(!<font color=blue>__traits</font>(compiles, EURa(1) == EURb(1)));
-<font color=green>// can check equality if only rounding mode differs
-</font><font color=blue>assert</font>(EURb(1.01) == EURc(1.01));
-<font color=green>// cannot compare with different currencies
-</font><font color=blue>static</font> <font color=blue>assert</font>(!<font color=blue>__traits</font>(compiles, EURa(1) &lt; USD(1)));
-</pre>
-<br><br>
-<div class="struct-members"><h2><a name="money.this"></a>this(double <i>x</i>);
-</h2>
-<div class="declaration-description"><p>Usual contructor. Uses rmode on <i>x</i>.</p>
+</code></li>
+      </ol>
+    </div>
+  </div>
+</section>
 
-</div>
-<h2><a name="money.init"></a>static immutable <u>init</u>;
-</h2>
-<div class="declaration-description"><p>default initialisation value is zero</p>
+  </p>
+</div><div class="ddoc_examples">
+  <h4>Examples</h4>
+  <p class="para">
+    Arithmetic ignores rounding mode
 
-</div>
-<h2><a name="money.max"></a>static immutable <u>max</u>;
-</h2>
-<div class="declaration-description"><p>maximum amount depends on dec_places</p>
+<section class="code_listing">
+  <div class="code_sample">
+    <div class="dlang">
+      <ol class="code_lines">
+        <li><code class="code"><span class="keyword">alias</span> EUR = <span class="psymbol">currency</span>!(<span class="string_literal">"EUR"</span>, 2, roundingMode.UP);
+<span class="keyword">auto</span> one = EUR(1);
+<span class="keyword">assert</span>(one != one / 3);
+</code></li>
+      </ol>
+    </div>
+  </div>
+</section>
 
-</div>
-<h2><a name="money.min"></a>static immutable <u>min</u>;
-</h2>
-<div class="declaration-description"><p>minimum amount depends on dec_places</p>
+  </p>
+</div><div class="ddoc_examples">
+  <h4>Examples</h4>
+  <p class="para">
+    Generic equality and order
 
-</div>
-<h2><a name="money.opBinary"></a>const T <u>opBinary</u>(string op)(const T <i>rhs</i>);
-</h2>
-<div class="declaration-description"><p>Can add and subtract money amounts of the same type.</p>
+<section class="code_listing">
+  <div class="code_sample">
+    <div class="dlang">
+      <ol class="code_lines">
+        <li><code class="code"><span class="keyword">alias</span> USD = <span class="psymbol">currency</span>!(<span class="string_literal">"USD"</span>, 2);
+<span class="keyword">alias</span> EURa = <span class="psymbol">currency</span>!(<span class="string_literal">"EUR"</span>, 2);
+<span class="keyword">alias</span> EURb = <span class="psymbol">currency</span>!(<span class="string_literal">"EUR"</span>, 4);
+<span class="keyword">alias</span> EURc = <span class="psymbol">currency</span>!(<span class="string_literal">"EUR"</span>, 4, roundingMode.DOWN);
+<span class="comment">// cannot compile with different currencies
+</span><span class="keyword">static</span> <span class="keyword">assert</span>(!<span class="keyword">__traits</span>(compiles, EURa(1) == USD(1)));
+<span class="comment">// cannot compile with different dec_places
+</span><span class="keyword">static</span> <span class="keyword">assert</span>(!<span class="keyword">__traits</span>(compiles, EURa(1) == EURb(1)));
+<span class="comment">// can check equality if only rounding mode differs
+</span><span class="keyword">assert</span>(EURb(1.01) == EURc(1.01));
+<span class="comment">// cannot compare with different currencies
+</span><span class="keyword">static</span> <span class="keyword">assert</span>(!<span class="keyword">__traits</span>(compiles, EURa(1) &lt; USD(1)));
+</code></li>
+      </ol>
+    </div>
+  </div>
+</section>
 
+  </p>
 </div>
-<h2><a name="money.opBinary.2"></a>const T <u>opBinary</u>(string op)(const long <i>rhs</i>);
-</h2>
-<div class="declaration-description"><p>Can multiply, divide, and modulo with integer values.</p>
+</section>
+<ul class="ddoc_members">
+  <li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.this" id="currency.this"><code class="code">this</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.this"></span>this(double <code class="code">x</code>);
 
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
 </div>
-<h2><a name="money.opBinary.3"></a>const T <u>opBinary</u>(string op)(const real <i>rhs</i>);
-</h2>
-<div class="declaration-description"><p>Can multiply, divide, and modulo floating point numbers.</p>
-
-</div>
-<h2><a name="money.opEquals"></a>const bool <u>opEquals</u>(OT)(auto ref const OT <i>other</i>) if (isMoney!OT &amp;&amp; <i>other</i>.__currency == currency &amp;&amp; <i>other</i>.__dec_places == dec_places);
-</h2>
-<div class="declaration-description"><p>Can check equality with money amounts of the same concurrency and decimal places.</p>
-
-</div>
-<h2><a name="money.opCmp"></a>const int <u>opCmp</u>(OT)(const OT <i>other</i>) if (isMoney!OT &amp;&amp; <i>other</i>.__currency == currency);
-</h2>
-<div class="declaration-description"><p>Can compare with money amounts of the same concurrency.</p>
-
-</div>
-<h2><a name="money.toString"></a>const void <u>toString</u>(scope void delegate(const(char)[]) <i>sink</i>, FormatSpec!char <i>fmt</i>);
-</h2>
-<div class="declaration-description"><p>Can convert to string.</p>
-
-</div>
-</div>
-</div>
-<h2><a name="roundingMode"></a>enum <u>roundingMode</u>: int;
-</h2>
-<div class="declaration-description"><p>Specifies rounding behavior</p>
-
-<div class="enum-members"><h2><a name="roundingMode.UP"></a><u>UP</u></h2>
-<div class="declaration-description"><p>Round upwards, e.g. 3.1 up to 4.</p>
-
-</div>
-<h2><a name="roundingMode.DOWN"></a><u>DOWN</u></h2>
-<div class="declaration-description"><p>Round downwards, e.g. 3.9 down to 3.</p>
-
-</div>
-<h2><a name="roundingMode.HALF_UP"></a><u>HALF_UP</u></h2>
-<div class="declaration-description"><p>Round to nearest number, half way between round up, e.g. 3.5 to 4.</p>
-
-</div>
-<h2><a name="roundingMode.HALF_DOWN"></a><u>HALF_DOWN</u></h2>
-<div class="declaration-description"><p>Round to nearest number, half way between round dow, e.g. 3.5 to 3.</p>
-
-</div>
-<h2><a name="roundingMode.HALF_EVEN"></a><u>HALF_EVEN</u></h2>
-<div class="declaration-description"><p>Round to nearest number, half way between round to even number, e.g. 3.5 to 4.</p>
-
-</div>
-<h2><a name="roundingMode.HALF_ODD"></a><u>HALF_ODD</u></h2>
-<div class="declaration-description"><p>Round to nearest number, half way between round to odd number, e.g. 3.5 to 3.</p>
-
-</div>
-<h2><a name="roundingMode.HALF_TO_ZERO"></a><u>HALF_TO_ZERO</u></h2>
-<div class="declaration-description"><p>Round to nearest number, half way between round towards zero, e.g. -3.5 to -3.</p>
-
-</div>
-<h2><a name="roundingMode.HALF_FROM_ZERO"></a><u>HALF_FROM_ZERO</u></h2>
-<div class="declaration-description"><p>Round to nearest number, half way between round away from zero, e.g. -3.5 to -4.</p>
-
-</div>
-<h2><a name="roundingMode.UNNECESSARY"></a><u>UNNECESSARY</u></h2>
-<div class="declaration-description"><p>Throw exception if rounding would be necessary</p>
-
-</div>
-</div>
-</div>
-<h2><a name="round"></a>long <u>round</u>(roundingMode m)(long <i>x</i>, int <i>dec_place</i>);
-</h2>
-<div class="declaration-description"><p>Round an integer to a certain decimal place according to rounding mode</p>
-<b>Examples:</b><br>
-<pre class="d_code">
-<font color=blue>assert</font> (<u>round</u>!(roundingMode.DOWN)     (1009, 1) == 1000);
-<font color=blue>assert</font> (<u>round</u>!(roundingMode.UP)       (1001, 1) == 1010);
-<font color=blue>assert</font> (<u>round</u>!(roundingMode.HALF_UP)  (1005, 1) == 1010);
-<font color=blue>assert</font> (<u>round</u>!(roundingMode.HALF_DOWN)(1005, 1) == 1000);
-</pre>
-<br><br>
-</div>
-<h2><a name="round.2"></a>real <u>round</u>(real <i>x</i>, roundingMode <i>m</i>);
-</h2>
-<div class="declaration-description"><p>Round a float to an integer according to rounding mode</p>
-
-</div>
-<h2><a name="ForbiddenRounding"></a>class <u>ForbiddenRounding</u>: <u>object.Exception</u>;
-</h2>
-<div class="declaration-description"><p>Exception is thrown if rounding would have to happen,
-    but roundingMode.UNNECESSARY is specified.</p>
-
-</div>
-<h2><a name="OverflowException"></a>class <u>OverflowException</u>: <u>object.Exception</u>;
-</h2>
-<div class="declaration-description"><p>Overflow can happen with money arithmetic.</p>
-
-</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Floating point contructor. Uses rmode on <code class="code">x</code>.
+  </p>
 </div>
 
-    </body>
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.this" id="currency.this"><code class="code">this</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.this.2"></span>this(string <code class="code">x</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    String contructor.
+
+  </p>
+</div>
+<div class="ddoc_throws">
+  <h4>Throws</h4>
+  <p class="para">
+    ParseError or std.conv.ConvOverflowException for invalid inputs
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.init" id="currency.init"><code class="code">init</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.init"></span>static immutable <code class="code">init</code>;
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    default initialisation value is zero
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.max" id="currency.max"><code class="code">max</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.max"></span>static immutable <code class="code">max</code>;
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    maximum amount depends on dec_places
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.min" id="currency.min"><code class="code">min</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.min"></span>static immutable <code class="code">min</code>;
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    minimum amount depends on dec_places
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.opBinary" id="currency.opBinary"><code class="code">opBinary</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.opBinary"></span>const T <code class="code">opBinary</code>(string op)(const T <code class="code">rhs</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can add and subtract money amounts of the same type.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.opBinary" id="currency.opBinary"><code class="code">opBinary</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.opBinary.2"></span>const T <code class="code">opBinary</code>(string op)(const long <code class="code">rhs</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can multiply, divide, and modulo with integer values.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.opBinary" id="currency.opBinary"><code class="code">opBinary</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.opBinary.3"></span>const T <code class="code">opBinary</code>(string op)(const real <code class="code">rhs</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can multiply, divide, and modulo floating point numbers.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.opOpAssign" id="currency.opOpAssign"><code class="code">opOpAssign</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.opOpAssign"></span>void <code class="code">opOpAssign</code>(string op)(const T <code class="code">rhs</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can add and subtract money amounts of the same type.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.opOpAssign" id="currency.opOpAssign"><code class="code">opOpAssign</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.opOpAssign.2"></span>void <code class="code">opOpAssign</code>(string op)(const long <code class="code">rhs</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can multiply, divide, and modulo with integer values.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.opOpAssign" id="currency.opOpAssign"><code class="code">opOpAssign</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.opOpAssign.3"></span>void <code class="code">opOpAssign</code>(string op)(const real <code class="code">rhs</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can multiply, divide, and modulo floating point numbers.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.opEquals" id="currency.opEquals"><code class="code">opEquals</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.opEquals"></span>const bool <code class="code">opEquals</code>(OT)(auto ref const OT <code class="code">other</code>) if (isCurrency!OT &amp;&amp; <code class="code">other</code>.__currency == currency_name &amp;&amp; <code class="code">other</code>.__dec_places == dec_places);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can check equality with money amounts of the same concurrency and decimal places.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.opCmp" id="currency.opCmp"><code class="code">opCmp</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.opCmp"></span>const int <code class="code">opCmp</code>(OT)(const OT <code class="code">other</code>) if (isCurrency!OT &amp;&amp; <code class="code">other</code>.__currency == currency_name);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can compare with money amounts of the same concurrency.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#currency.toString" id="currency.toString"><code class="code">toString</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="currency.toString"></span>const void <code class="code">toString</code>(scope void delegate(const(char)[]) <code class="code">sink</code>, FormatSpec!char <code class="code">fmt</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Can convert to string.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li>
+</ul>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode" id="roundingMode"><code class="code">roundingMode</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode"></span>enum <code class="code">roundingMode</code>: int;
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Specifies rounding behavior
+  </p>
+</div>
+
+</section>
+<ul class="ddoc_members">
+  <li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.UP" id="roundingMode.UP"><code class="code">UP</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.UP"></span><code class="code">UP</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round upwards, e.g. 3.1 up to 4.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.DOWN" id="roundingMode.DOWN"><code class="code">DOWN</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.DOWN"></span><code class="code">DOWN</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round downwards, e.g. 3.9 down to 3.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.HALF_UP" id="roundingMode.HALF_UP"><code class="code">HALF_UP</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.HALF_UP"></span><code class="code">HALF_UP</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round to nearest number, half way between round up, e.g. 3.5 to 4.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.HALF_DOWN" id="roundingMode.HALF_DOWN"><code class="code">HALF_DOWN</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.HALF_DOWN"></span><code class="code">HALF_DOWN</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round to nearest number, half way between round dow, e.g. 3.5 to 3.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.HALF_EVEN" id="roundingMode.HALF_EVEN"><code class="code">HALF_EVEN</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.HALF_EVEN"></span><code class="code">HALF_EVEN</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round to nearest number, half way between round to even number, e.g. 3.5 to 4.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.HALF_ODD" id="roundingMode.HALF_ODD"><code class="code">HALF_ODD</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.HALF_ODD"></span><code class="code">HALF_ODD</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round to nearest number, half way between round to odd number, e.g. 3.5 to 3.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.HALF_TO_ZERO" id="roundingMode.HALF_TO_ZERO"><code class="code">HALF_TO_ZERO</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.HALF_TO_ZERO"></span><code class="code">HALF_TO_ZERO</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round to nearest number, half way between round towards zero, e.g. -3.5 to -3.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.HALF_FROM_ZERO" id="roundingMode.HALF_FROM_ZERO"><code class="code">HALF_FROM_ZERO</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.HALF_FROM_ZERO"></span><code class="code">HALF_FROM_ZERO</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round to nearest number, half way between round away from zero, e.g. -3.5 to -4.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#roundingMode.UNNECESSARY" id="roundingMode.UNNECESSARY"><code class="code">UNNECESSARY</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="roundingMode.UNNECESSARY"></span><code class="code">UNNECESSARY</code>
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Throw exception if rounding would be necessary
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li>
+</ul>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#round" id="round"><code class="code">round</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="round"></span>long <code class="code">round</code>(roundingMode m)(long <code class="code">x</code>, int <code class="code">dec_place</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round an integer to a certain decimal place according to rounding mode
+  </p>
+</div>
+<div class="ddoc_examples">
+  <h4>Examples</h4>
+  <p class="para">
+    
+<section class="code_listing">
+  <div class="code_sample">
+    <div class="dlang">
+      <ol class="code_lines">
+        <li><code class="code"><span class="keyword">assert</span> (<span class="psymbol">round</span>!(roundingMode.DOWN)     (1009, 1) == 1000);
+<span class="keyword">assert</span> (<span class="psymbol">round</span>!(roundingMode.UP)       (1001, 1) == 1010);
+<span class="keyword">assert</span> (<span class="psymbol">round</span>!(roundingMode.HALF_UP)  (1005, 1) == 1010);
+<span class="keyword">assert</span> (<span class="psymbol">round</span>!(roundingMode.HALF_DOWN)(1005, 1) == 1000);
+</code></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+  </p>
+</div>
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#round" id="round"><code class="code">round</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="round.2"></span>@trusted real <code class="code">round</code>(real <code class="code">x</code>, roundingMode <code class="code">m</code>);
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Round a float to an integer according to rounding mode
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#ForbiddenRounding" id="ForbiddenRounding"><code class="code">ForbiddenRounding</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="ForbiddenRounding"></span>class <code class="code">ForbiddenRounding</code>: <span class="ddoc_psuper_symbol">object.Exception</span>;
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Exception is thrown if rounding would have to happen,
+    but roundingMode.UNNECESSARY is specified.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#OverflowException" id="OverflowException"><code class="code">OverflowException</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="OverflowException"></span>class <code class="code">OverflowException</code>: <span class="ddoc_psuper_symbol">object.Exception</span>;
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Overflow can happen with money arithmetic.
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li><li class="ddoc_member">
+  <div class="ddoc_member_header">
+  <div class="ddoc_header_anchor">
+  <a href="#ParseError" id="ParseError"><code class="code">ParseError</code></a>
+</div>
+</div><div class="ddoc_decl">
+  <section class="section">
+    <div class="declaration">
+      <h4>Declaration</h4>
+      <div class="dlang">
+        <p class="para">
+          <code class="code">
+            <span class="ddoc_anchor" id="ParseError"></span>class <code class="code">ParseError</code>: <span class="ddoc_psuper_symbol">object.Exception</span>;
+
+          </code>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ddoc_decl">
+  <section class="section ddoc_sections">
+  <div class="ddoc_summary">
+  <p class="para">
+    Failure to parse a money amount from string
+  </p>
+</div>
+
+</section>
+
+</div>
+
+</li>
+</ul>
+  </div>
+</section>
+</section>
+      </article>
+    </div>
+  </body>
 </html>
