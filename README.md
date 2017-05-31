@@ -31,6 +31,7 @@ Features:
     writefln("%d", EUR(3.6)); // "4EUR"
     writefln("%f", EUR(3.141592)); // "3.1416EUR"
     writefln("%.2f", EUR(3.145)); // "3.15EUR"
+    writefln("%.2f", EUR("3.145")); // "3.15EUR"
 ```
 
 Scope is smaller than JSR 354, for example,

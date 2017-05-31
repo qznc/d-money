@@ -81,10 +81,32 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     enum __rmode = rmode;
     long amount;
 
-    /// Usual contructor. Uses rmode on x.
+    /// Floating point contructor. Uses rmode on x.
     this(double x)
     {
         amount = to!long(round(x * pow10(dec_places), rmode));
+    }
+
+    /** String contructor.
+      *
+      * Throws: ParseError or std.conv.ConvOverflowException for invalid inputs
+      */
+    this(string x)
+    {
+        import std.regex;
+        import std.stdio;
+
+        auto match = matchFirst(x, ctRegex!"([0-9]+).?([0-9]*)");
+        if (match.length == 0)
+            throw new ParseError("Does not start with digit: " ~ x);
+        long integer = match[1].to!long;
+        long decimals;
+        if (match[2] != "")
+            decimals = match[2].to!long;
+        if (long.max / pow10(dec_places) < integer)
+            throw new ParseError("Number too large: " ~ x);
+        auto dec_amount = decimals * pow10(cast(int)(dec_places - match[2].length));
+        amount = integer * pow10(dec_places) + dec_amount;
     }
 
     private static T fromLong(long a)
@@ -731,4 +753,34 @@ class OverflowException : Exception
             super("Overflow", file, line, next);
         }
     }
+}
+
+/** Failure to parse a money amount from string */
+class ParseError : Exception
+{
+    public
+    {
+        @safe pure nothrow this(string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+        {
+            super("Parse error", file, line, next);
+        }
+    }
+}
+
+unittest
+{
+    import std.exception : assertThrown;
+    import std.format : format;
+    import std.conv : ConvOverflowException;
+
+    alias EUR = currency!("EUR");
+    assertThrown!ParseError(EUR("foo"));
+    assertThrown!ParseError(EUR("999999999999999999"));
+    assertThrown!ConvOverflowException(EUR("9999999999999999999999"));
+    EUR x = EUR("123.45");
+    EUR y = EUR("123");
+
+    assert(format("%f", x) == "123.4500EUR");
+    assert(format("%.1f", x) == "123.5EUR");
+    assert(format("%f", y) == "123.0000EUR");
 }
