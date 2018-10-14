@@ -314,6 +314,26 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
             static assert(0, "opCmp with such 'other' not implemented");
     }
 
+    void toDecimalString(scope void delegate(const(char)[]) sink, FormatSpec!char fmt) const
+    {
+        formattedWrite(sink, "%d", (amount / dec_mask));
+        sink(".");
+        auto decimals = amount % dec_mask;
+        if (fmt.precision < dec_places)
+        {
+            auto n = dec_places - fmt.precision;
+            decimals = round!(rmode)(decimals, n);
+            decimals = decimals / pow10(n);
+            import std.conv : text;
+
+            formattedWrite(sink, "%0" ~ text(fmt.precision) ~ "d", decimals);
+        }
+        else
+        {
+            formattedWrite(sink, decimals_format!dec_places(), decimals);
+        }
+    }
+
     /// Can convert to string.
     void toString(scope void delegate(const(char)[]) sink, FormatSpec!char fmt) const
     {
@@ -322,23 +342,11 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         case 's': /* default e.g. for writeln */
             goto case;
         case 'f':
-            formattedWrite(sink, "%d", (amount / dec_mask));
-            sink(".");
-            auto decimals = amount % dec_mask;
-            if (fmt.precision < dec_places)
-            {
-                auto n = dec_places - fmt.precision;
-                decimals = round!(rmode)(decimals, n);
-                decimals = decimals / pow10(n);
-                import std.conv : text;
-
-                formattedWrite(sink, "%0" ~ text(fmt.precision) ~ "d", decimals);
-            }
-            else
-            {
-                formattedWrite(sink, decimals_format!dec_places(), decimals);
-            }
+	        toDecimalString(sink, fmt);
             sink(currency_name);
+            break;
+        case 'F':
+	        toDecimalString(sink, fmt);
             break;
         case 'd':
             auto ra = round!rmode(amount, dec_places);
@@ -370,6 +378,8 @@ unittest
     assert(format("%.2f", EUR(3.145)) == "3.15EUR");
     // From issue #5
     assert(format("%.4f", EUR(0.01234)) == "0.0123EUR");
+    
+    assert(format("%F", EUR(3.141592)) == "3.1416");
 }
 
 /// Overflow is an error, since silent corruption is worse
