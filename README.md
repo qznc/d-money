@@ -43,6 +43,4 @@ then wrap `currency` into your own data type.
 
 Available via [dub on code.dlang.org](http://code.dlang.org/packages/money).
 
-DDoc documentation on [Github pages](https://qznc.github.io/d-money/).
-
 Licence is Boost v1.0.
