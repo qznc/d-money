@@ -94,19 +94,20 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     this(string x)
     {
         import std.regex;
-        import std.stdio;
 
-        auto match = matchFirst(x, ctRegex!"([0-9]+).?([0-9]*)");
+        auto match = matchFirst(x, ctRegex!"(-?)([0-9]+).?([0-9]*)");
         if (match.length == 0)
-            throw new ParseError("Does not start with digit: " ~ x);
-        long integer = match[1].to!long;
+            throw new ParseError("Does not start with digit or minus: " ~ x);
+        long integer = match[2].to!long;
         long decimals;
-        if (match[2] != "")
-            decimals = match[2].to!long;
+        if (match[3] != "")
+            decimals = match[3].to!long;
         if (long.max / pow10(dec_places) < integer)
             throw new ParseError("Number too large: " ~ x);
-        auto dec_amount = decimals * pow10(cast(int)(dec_places - match[2].length));
+        auto dec_amount = decimals * pow10(cast(int)(dec_places - match[3].length));
         amount = integer * pow10(dec_places) + dec_amount;
+        if (match[1] == "-")
+            amount = -amount;
     }
 
     private static T fromLong(long a)
@@ -318,7 +319,7 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     {
         formattedWrite(sink, "%d", (amount / dec_mask));
         sink(".");
-        auto decimals = amount % dec_mask;
+        auto decimals = abs(amount % dec_mask);
         if (fmt.precision < dec_places)
         {
             auto n = dec_places - fmt.precision;
@@ -793,4 +794,15 @@ unittest
     assert(format("%f", x) == "123.4500EUR");
     assert(format("%.1f", x) == "123.5EUR");
     assert(format("%f", y) == "123.0000EUR");
+}
+
+unittest {
+    // From issue #8  https://github.com/qznc/d-money/issues/8
+    import std.format : format;
+    alias T1 = currency!("T1", 2);
+    auto t1 = T1(-123.45);
+    assert(format("%f", t1) == "-123.45T1");
+    auto t2 = T1("-123.45");
+    assert(format("%f", t2) == "-123.45T1");
+    assert(t1 == t2);
 }
