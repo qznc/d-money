@@ -99,6 +99,7 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     /// Create a new Fixed struct given a string
     this(Range)(Range s) if (isNarrowString!Range)
     {
+	s = s.replace(",", "");
         if (!s.empty)
         {
 	    if (!isNumeric(s)) {
@@ -151,6 +152,11 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         assert(cast(int) p == 1);
         assert(p.to!int == 1);
         assert(p.to!double == 1.1);
+
+	auto y = EUR("1,000.000,00");
+	auto z = EUR("1000");
+	// writeln(y);
+	assert(y == z);
     }
 
     /// Can add and subtract money amounts of the same type.
