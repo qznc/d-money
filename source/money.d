@@ -128,6 +128,7 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
 
     /// Can add and subtract money amounts of the same type.
     T opBinary(string op)(const T rhs) const
+        if (op != "/")
     {
         static if (op == "+")
         {
@@ -148,6 +149,14 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         else
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
+
+   /// Can divide by money amount of the same type
+    double opBinary(string op)(const T rhs) const
+        if (op == "/")
+    {
+        return (amount.to!double) / (rhs.amount.to!double);
+    }
+
 
     /// Can multiply, divide, and modulo with integer values.
     T opBinary(string op)(const long rhs) const
@@ -517,6 +526,16 @@ unittest
     assert(x == EUR.max);
     assertThrown!OverflowException(y /= 10.0);
     assert(y == EUR.min);
+}
+
+@safe unittest
+{
+    alias EUR = currency!("EUR");
+    auto x = EUR(35.0);
+    assert(x / EUR(7.0) == 5.0);
+    assert(x / EUR(-5.0) == -7.0);
+    // default is four significant digits
+    assert(x / EUR(1.2) - 29.1667 < 0.000049);
 }
 
 /** Specifies rounding behavior **/
