@@ -155,7 +155,6 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
 
 	auto y = EUR("1,000.000,00");
 	auto z = EUR("1000");
-	// writeln(y);
 	assert(y == z);
     }
 
@@ -322,6 +321,12 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         return other.amount == amount;
     }
 
+    int opEquals(T)(const T other) const if (isNumeric!T)
+    {
+	T other_amount = other * __factor;
+        return other_amount == amount;
+    }
+
     /// Can compare with money amounts of the same concurrency.
     int opCmp(OT)(const OT other) const 
             if (isCurrency!OT && other.__currency == currency_name)
@@ -351,9 +356,10 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
 
     int opCmp(T)(const T other) const if (isNumeric!T)
     {
-        if (this.amount < other * __factor)
+	T other_amount = other * __factor;
+        if (this.amount < other_amount)
             return -1;
-        else if (this.amount > other * __factor)
+        else if (this.amount > other_amount)
             return 1;
         else
             return 0;
@@ -440,6 +446,16 @@ unittest
 
     assert(one > 0);
     assert(one < 2);
+
+    assert(one == 1);
+    assert(one == 1.0);
+    assert(!(one > 1));
+    assert(!(one < 1));
+
+    assert(one != 0);
+    assert(one != 0.0);
+    assert(one != 2);
+    assert(one != 2.0);
 }
 
 /// Arithmetic ignores rounding mode
