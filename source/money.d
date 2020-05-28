@@ -321,7 +321,7 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         return other.amount == amount;
     }
 
-    int opEquals(T)(const T other) const if (isNumeric!T)
+    bool opEquals(T)(const T other) const if (isNumeric!T)
     {
 	T other_amount = other * __factor;
         return other_amount == amount;
