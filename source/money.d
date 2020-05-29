@@ -89,7 +89,7 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     /// Floating point contructor. Uses rmode on x.
     this(double x)
     {
-        amount = to!long(round(x * pow10(dec_places), rmode));
+        amount = to!long(round(x * __factor, rmode));
     }
 
     /** String contructor.
@@ -113,7 +113,7 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
                 decimal = spl.front;
             if (decimal.length > dec_places)
                 decimal = decimal[0 .. dec_places]; // truncate
-            if (long.max / pow10(dec_places) < frontItem.to!long)
+            if (long.max / __factor < frontItem.to!long)
                 throw new ParseError("Number too large: " ~ s);
             amount = chain(frontItem, decimal, '0'.repeat(dec_places - decimal.length)).to!long;
         }
@@ -133,7 +133,7 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     /// minimum amount depends on dec_places
     static immutable min = fromLong(long.min);
 
-    private static immutable dec_mask = pow10(dec_places);
+    private static immutable dec_mask = __factor;
 
     T opCast(T: bool)() const
     {
@@ -198,8 +198,8 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         }
         else static if (op == "%")
         {
-            const intpart = amount / pow10(dec_places);
-            return fromLong(intpart % rhs * pow10(dec_places));
+            const intpart = amount / __factor;
+            return fromLong(intpart % rhs * __factor);
         }
         else
             static assert(0, "Operator " ~ op ~ " not implemented");
@@ -216,13 +216,13 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
             const result = muls(amount, converted.amount, overflow);
             if (overflow)
                 throw new OverflowException();
-            return fromLong(result / pow10(dec_places));
+            return fromLong(result / __factor);
         }
         else static if (op == "/")
         {
             const converted = T(rhs);
             bool overflow = false;
-            auto mult = muls(amount, pow10(dec_places), overflow);
+            auto mult = muls(amount, __factor, overflow);
             if (overflow)
                 throw new OverflowException();
             return fromLong(mult / converted.amount);
@@ -276,8 +276,8 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         }
         else static if (op == "%")
         {
-            const intpart = amount / pow10(dec_places);
-            amount = intpart % rhs * pow10(dec_places);
+            const intpart = amount / __factor;
+            amount = intpart % rhs * __factor;
         }
         else
             static assert(0, "Operator " ~ op ~ " not implemented");
@@ -293,13 +293,13 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
             const result = muls(amount, converted.amount, overflow);
             if (overflow)
                 throw new OverflowException();
-            amount = result / pow10(dec_places);
+            amount = result / __factor;
         }
         else static if (op == "/")
         {
             const converted = T(rhs);
             bool overflow = false;
-            auto mult = muls(amount, pow10(dec_places), overflow);
+            auto mult = muls(amount, __factor, overflow);
             if (overflow)
                 throw new OverflowException();
             amount = mult / converted.amount;
