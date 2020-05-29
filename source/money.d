@@ -52,17 +52,21 @@
  */
 module money;
 
+import std.algorithm : splitter;
 import std.math : floor, ceil, lrint, abs, FloatingPointControl;
 import std.conv : to;
 import core.checkedint : adds, subs, muls, negs;
 import std.format : FormatSpec, formattedWrite;
+import std.range : repeat, chain, empty;
 import std.traits : hasMember;
+import std.traits;
+import std.string;
+import std.stdio;
+
 
 @nogc pure @safe nothrow private long pow10(int x)
 {
-    if (x <= 0)
-        return 1;
-    return 10 * pow10(x - 1);
+    return 10 ^^ x;
 }
 
 pure @safe nothrow private string decimals_format(int x)()
@@ -79,35 +83,40 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     enum __currency = currency_name;
     enum __dec_places = dec_places;
     enum __rmode = rmode;
+    enum __factor = 10 ^^ dec_places;
     long amount;
 
     /// Floating point contructor. Uses rmode on x.
     this(double x)
     {
-        amount = to!long(round(x * pow10(dec_places), rmode));
+        amount = to!long(round(x * __factor, rmode));
     }
 
     /** String contructor.
       *
       * Throws: ParseError or std.conv.ConvOverflowException for invalid inputs
       */
-    this(string x)
+    /// Create a new Fixed struct given a string
+    this(Range)(Range s) if (isNarrowString!Range)
     {
-        import std.regex;
-
-        auto match = matchFirst(x, ctRegex!"(-?)([0-9]+).?([0-9]*)");
-        if (match.length == 0)
-            throw new ParseError("Does not start with digit or minus: " ~ x);
-        long integer = match[2].to!long;
-        long decimals;
-        if (match[3] != "")
-            decimals = match[3].to!long;
-        if (long.max / pow10(dec_places) < integer)
-            throw new ParseError("Number too large: " ~ x);
-        auto dec_amount = decimals * pow10(cast(int)(dec_places - match[3].length));
-        amount = integer * pow10(dec_places) + dec_amount;
-        if (match[1] == "-")
-            amount = -amount;
+	s = s.replace(",", "");
+        if (!s.empty)
+        {
+	    if (!isNumeric(s)) {
+		throw new ParseError("!isNumeric: " ~ s);
+	    }
+            auto spl = s.splitter(".");
+            auto frontItem = spl.front;
+            spl.popFront;
+            typeof(frontItem) decimal;
+            if (!spl.empty)
+                decimal = spl.front;
+            if (decimal.length > dec_places)
+                decimal = decimal[0 .. dec_places]; // truncate
+            if (long.max / __factor < frontItem.to!long)
+                throw new ParseError("Number too large: " ~ s);
+            amount = chain(frontItem, decimal, '0'.repeat(dec_places - decimal.length)).to!long;
+        }
     }
 
     private static T fromLong(long a)
@@ -124,7 +133,30 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
     /// minimum amount depends on dec_places
     static immutable min = fromLong(long.min);
 
-    private static immutable dec_mask = pow10(dec_places);
+    private static immutable dec_mask = __factor;
+
+    T opCast(T: bool)() const
+    {
+        return amount != 0;
+    }
+
+    T opCast(T)() const if (isNumeric!T)
+    {
+        return (amount.to!T / __factor).to!T;
+    }
+
+    unittest
+    {
+        alias EUR = currency!("EUR");
+        auto p = EUR(1.1);
+        assert(cast(int) p == 1);
+        assert(p.to!int == 1);
+        assert(p.to!double == 1.1);
+
+	auto y = EUR("1,000.000,00");
+	auto z = EUR("1000");
+	assert(y == z);
+    }
 
     /// Can add and subtract money amounts of the same type.
     T opBinary(string op)(const T rhs) const
@@ -175,12 +207,13 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         }
         else static if (op == "%")
         {
-            const intpart = amount / pow10(dec_places);
-            return fromLong(intpart % rhs * pow10(dec_places));
+            const intpart = amount / __factor;
+            return fromLong(intpart % rhs * __factor);
         }
         else
             static assert(0, "Operator " ~ op ~ " not implemented");
     }
+    alias opBinaryRight = opBinary;
 
     /// Can multiply, divide, and modulo floating point numbers.
     T opBinary(string op)(const real rhs) const
@@ -192,13 +225,13 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
             const result = muls(amount, converted.amount, overflow);
             if (overflow)
                 throw new OverflowException();
-            return fromLong(result / pow10(dec_places));
+            return fromLong(result / __factor);
         }
         else static if (op == "/")
         {
             const converted = T(rhs);
             bool overflow = false;
-            auto mult = muls(amount, pow10(dec_places), overflow);
+            auto mult = muls(amount, __factor, overflow);
             if (overflow)
                 throw new OverflowException();
             return fromLong(mult / converted.amount);
@@ -252,8 +285,8 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         }
         else static if (op == "%")
         {
-            const intpart = amount / pow10(dec_places);
-            amount = intpart % rhs * pow10(dec_places);
+            const intpart = amount / __factor;
+            amount = intpart % rhs * __factor;
         }
         else
             static assert(0, "Operator " ~ op ~ " not implemented");
@@ -269,13 +302,13 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
             const result = muls(amount, converted.amount, overflow);
             if (overflow)
                 throw new OverflowException();
-            amount = result / pow10(dec_places);
+            amount = result / __factor;
         }
         else static if (op == "/")
         {
             const converted = T(rhs);
             bool overflow = false;
-            auto mult = muls(amount, pow10(dec_places), overflow);
+            auto mult = muls(amount, __factor, overflow);
             if (overflow)
                 throw new OverflowException();
             amount = mult / converted.amount;
@@ -295,6 +328,12 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
                 && other.__dec_places == dec_places)
     {
         return other.amount == amount;
+    }
+
+    bool opEquals(T)(const T other) const if (isNumeric!T)
+    {
+	T other_amount = other * __factor;
+        return other_amount == amount;
     }
 
     /// Can compare with money amounts of the same concurrency.
@@ -323,6 +362,18 @@ struct currency(string currency_name, int dec_places = 4, roundingMode rmode = r
         else
             static assert(0, "opCmp with such 'other' not implemented");
     }
+
+    int opCmp(T)(const T other) const if (isNumeric!T)
+    {
+	T other_amount = other * __factor;
+        if (this.amount < other_amount)
+            return -1;
+        else if (this.amount > other_amount)
+            return 1;
+        else
+            return 0;
+    }
+
 
     void toDecimalString(scope void delegate(const(char)[]) sink, FormatSpec!char fmt) const
     {
@@ -401,6 +452,19 @@ unittest
     auto one = EUR(1);
     assertThrown!OverflowException(EUR.max + one);
     assertThrown!OverflowException(EUR.min - one);
+
+    assert(one > 0);
+    assert(one < 2);
+
+    assert(one == 1);
+    assert(one == 1.0);
+    assert(!(one > 1));
+    assert(!(one < 1));
+
+    assert(one != 0);
+    assert(one != 0.0);
+    assert(one != 2);
+    assert(one != 2.0);
 }
 
 /// Arithmetic ignores rounding mode
@@ -824,4 +888,15 @@ unittest {
     auto t2 = T1("-123.45");
     assert(format("%f", t2) == "-123.45T1");
     assert(t1 == t2);
+}
+
+unittest {
+    // From https://github.com/qznc/d-money/issues/11
+    alias EUR = currency!("EUR");
+    EUR x = EUR( 1.23456 );  // rounded
+    EUR y = EUR("1.23456");  // truncated
+    EUR z = EUR("1.23456789");  // truncated
+    assert(8 == y.sizeof);
+    assert(x >= y);
+    assert(z == y);
 }
