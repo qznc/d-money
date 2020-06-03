@@ -1,8 +1,0 @@
-{
-	"name": "money",
-	"description": "A money data type, for easy and safe handling of currency amounts",
-	"copyright": "Copyright © 2016, Andreas Zwinkau",
-	"authors": ["Andreas Zwinkau <qznc@web.de>"],
-	"license": "BSL-1.0",
-	"targetType": "library"
-}
