@@ -1,4 +1,10 @@
 language: d
+d:
+  - dmd
+  - dmd-beta
+  - dmd-nightly
+  - ldc
+  - ldc-beta
 
 install:
   - wget -O doveralls "https://github.com/ColdenCullen/doveralls/releases/download/v1.3.2/doveralls_linux_travis"
